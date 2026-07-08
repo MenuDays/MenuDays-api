@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model auditoria_logs {
+  id            BigInt    @id @default(autoincrement())
+  usuario_id    BigInt?
+  accion        String    @db.VarChar(100)
+  entidad_tipo  String    @db.VarChar(50)
+  entidad_id    BigInt?
+  datos_previos Json?
+  datos_nuevos  Json?
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  usuarios      usuarios? @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([entidad_tipo, entidad_id], map: "ix_auditoria_entidad")
+  @@index([usuario_id], map: "ix_auditoria_usuario")
+}
+
+model auth_tokens {
+  id         BigInt          @id @default(autoincrement())
+  usuario_id BigInt
+  tipo       auth_token_tipo
+  token_hash String          @unique(map: "ux_auth_tokens_hash")
+  expira_en  DateTime        @db.Timestamptz(6)
+  usado_en   DateTime?       @db.Timestamptz(6)
+  created_at DateTime        @default(now()) @db.Timestamptz(6)
+  usuarios   usuarios        @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([usuario_id, tipo], map: "ix_auth_tokens_usuario")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias {
+  id            BigInt          @id @default(autoincrement())
+  nombre        String          @unique @db.VarChar(100)
+  icono_id      BigInt?
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  iconos        iconos?         @relation(fields: [icono_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  platos        platos[]
+  subcategorias subcategorias[]
+}
+
+model favoritos {
+  id             BigInt       @id @default(autoincrement())
+  usuario_id     BigInt
+  restaurante_id BigInt
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios       usuarios     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([usuario_id, restaurante_id])
+  @@index([restaurante_id], map: "ix_favoritos_restaurante")
+  @@index([usuario_id], map: "ix_favoritos_usuario")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model galeria_imagenes {
+  id             BigInt       @id @default(autoincrement())
+  restaurante_id BigInt
+  url            String
+  es_portada     Boolean      @default(false)
+  orden          Int          @default(0)
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([restaurante_id], map: "ix_galeria_restaurante")
+}
+
+model iconos {
+  id            BigInt          @id @default(autoincrement())
+  nombre        String          @unique @db.VarChar(80)
+  url           String
+  categorias    categorias[]
+  subcategorias subcategorias[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model menus_del_dia {
+  id             BigInt             @id @default(autoincrement())
+  restaurante_id BigInt
+  nombre         String             @db.VarChar(150)
+  descripcion    String?
+  precio         Decimal            @db.Decimal(10, 2)
+  foto_url       String?
+  fecha_inicio   DateTime           @db.Date
+  fecha_fin      DateTime           @db.Date
+  estado         estado_publicacion @default(programado)
+  created_at     DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime?          @db.Timestamptz(6)
+  restaurantes   restaurantes       @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pedidos        pedidos[]
+
+  @@index([restaurante_id], map: "ix_menus_restaurante")
+  @@index([fecha_inicio, fecha_fin], map: "ix_menus_vigencia")
+}
+
+model motivos_reporte {
+  id       BigInt     @id @default(autoincrement())
+  nombre   String     @unique @db.VarChar(150)
+  reportes reportes[]
+}
+
+model notificaciones {
+  id              BigInt            @id @default(autoincrement())
+  usuario_id      BigInt
+  tipo            notificacion_tipo
+  titulo          String            @db.VarChar(150)
+  mensaje         String
+  leida           Boolean           @default(false)
+  referencia_tipo String?           @db.VarChar(50)
+  referencia_id   BigInt?
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  usuarios        usuarios          @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([usuario_id, leida], map: "ix_notificaciones_usuario")
+}
+
+model pedido_historial_estados {
+  id              BigInt         @id @default(autoincrement())
+  pedido_id       BigInt
+  estado_anterior estado_pedido?
+  estado_nuevo    estado_pedido
+  modificado_por  BigInt?
+  created_at      DateTime       @default(now()) @db.Timestamptz(6)
+  usuarios        usuarios?      @relation(fields: [modificado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedidos         pedidos        @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([pedido_id], map: "ix_historial_pedido")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pedidos {
+  id                       BigInt                     @id @default(autoincrement())
+  codigo_unico             String                     @unique(map: "ux_pedidos_codigo") @default(dbgenerated("upper(substr(replace((gen_random_uuid())::text, '-'::text, ''::text), 1, 8))")) @db.VarChar(12)
+  usuario_id               BigInt
+  restaurante_id           BigInt
+  tipo_item                item_pedido_tipo
+  menu_dia_id              BigInt?
+  plato_id                 BigInt?
+  observaciones            String?
+  precio_total             Decimal                    @db.Decimal(10, 2)
+  estado                   estado_pedido              @default(pendiente)
+  mensaje_whatsapp         String?
+  created_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
+  pedido_historial_estados pedido_historial_estados[]
+  menus_del_dia            menus_del_dia?             @relation(fields: [menu_dia_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  platos                   platos?                    @relation(fields: [plato_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes             restaurantes               @relation(fields: [restaurante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios                 usuarios                   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  resenas                  resenas?
+
+  @@index([estado], map: "ix_pedidos_estado")
+  @@index([restaurante_id, estado], map: "ix_pedidos_restaurante")
+  @@index([usuario_id], map: "ix_pedidos_usuario")
+}
+
+model plato_imagenes {
+  id       BigInt @id @default(autoincrement())
+  plato_id BigInt
+  url      String
+  orden    Int    @default(0)
+  platos   platos @relation(fields: [plato_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([plato_id], map: "ix_plato_imagenes_plato")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model platos {
+  id              BigInt                @id @default(autoincrement())
+  restaurante_id  BigInt
+  categoria_id    BigInt
+  subcategoria_id BigInt?
+  nombre          String                @db.VarChar(150)
+  descripcion     String?
+  precio          Decimal               @db.Decimal(10, 2)
+  estado          estado_disponibilidad @default(disponible)
+  activo          Boolean               @default(true)
+  orden           Int                   @default(0)
+  created_at      DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?             @db.Timestamptz(6)
+  pedidos         pedidos[]
+  plato_imagenes  plato_imagenes[]
+  categorias      categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes    restaurantes          @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subcategorias   subcategorias?        @relation(fields: [subcategoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([categoria_id], map: "ix_platos_categoria")
+  @@index([restaurante_id], map: "ix_platos_restaurante")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model promociones {
+  id             BigInt       @id @default(autoincrement())
+  restaurante_id BigInt
+  titulo         String       @db.VarChar(150)
+  descripcion    String?
+  imagen_url     String?
+  fecha_inicio   DateTime     @db.Date
+  fecha_fin      DateTime     @db.Date
+  activa         Boolean      @default(true)
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime?    @db.Timestamptz(6)
+  restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([restaurante_id], map: "ix_promociones_restaurante")
+  @@index([fecha_inicio, fecha_fin], map: "ix_promociones_vigencia")
+}
+
+model reportes {
+  id                                       BigInt          @id @default(autoincrement())
+  usuario_id                               BigInt
+  restaurante_id                           BigInt
+  motivo_id                                BigInt
+  descripcion                              String?
+  estado                                   estado_reporte  @default(pendiente)
+  revisado_por                             BigInt?
+  revisado_at                              DateTime?       @db.Timestamptz(6)
+  created_at                               DateTime        @default(now()) @db.Timestamptz(6)
+  motivos_reporte                          motivos_reporte @relation(fields: [motivo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes                             restaurantes    @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios_reportes_revisado_porTousuarios usuarios?       @relation("reportes_revisado_porTousuarios", fields: [revisado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_reportes_usuario_idTousuarios   usuarios        @relation("reportes_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([estado], map: "ix_reportes_estado")
+  @@index([restaurante_id], map: "ix_reportes_restaurante")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model resenas {
+  id                    BigInt        @id @default(autoincrement())
+  usuario_id            BigInt
+  restaurante_id        BigInt
+  pedido_id             BigInt        @unique
+  calificacion          Int           @db.SmallInt
+  comentario            String?
+  respuesta_restaurante String?
+  respuesta_at          DateTime?     @db.Timestamptz(6)
+  estado                estado_resena @default(visible)
+  created_at            DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime      @default(now()) @db.Timestamptz(6)
+  pedidos               pedidos       @relation(fields: [pedido_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes          restaurantes  @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios              usuarios      @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([usuario_id], map: "ix_resenas_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model restaurante_horarios {
+  id             BigInt       @id @default(autoincrement())
+  restaurante_id BigInt
+  dia_semana     Int          @db.SmallInt
+  hora_apertura  DateTime?    @db.Time(6)
+  hora_cierre    DateTime?    @db.Time(6)
+  cerrado        Boolean      @default(false)
+  restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([restaurante_id, dia_semana])
+}
+
+model restaurante_redes_sociales {
+  id             BigInt          @id @default(autoincrement())
+  restaurante_id BigInt
+  plataforma     red_social_tipo
+  url            String
+  restaurantes   restaurantes    @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([restaurante_id, plataforma])
+}
+
+model restaurante_telefonos {
+  id             BigInt        @id @default(autoincrement())
+  restaurante_id BigInt
+  telefono       String        @db.VarChar(30)
+  tipo           telefono_tipo @default(ambos)
+  created_at     DateTime      @default(now()) @db.Timestamptz(6)
+  restaurantes   restaurantes  @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([restaurante_id], map: "ix_restaurante_telefonos_rest")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model restaurantes {
+  id                         BigInt                       @id @default(autoincrement())
+  usuario_id                 BigInt                       @unique
+  solicitud_id               BigInt?                      @unique
+  nombre_comercial           String                       @db.VarChar(150)
+  descripcion                String?
+  direccion                  String                       @db.VarChar(255)
+  ciudad                     String                       @db.VarChar(100)
+  provincia                  String                       @db.VarChar(100)
+  ubicacion_lat              Decimal                      @db.Decimal(9, 6)
+  ubicacion_lng              Decimal                      @db.Decimal(9, 6)
+  logo_url                   String?
+  portada_url                String?
+  estado_operativo           estado_operativo_rest        @default(cerrado)
+  estado_cuenta              estado_cuenta_rest           @default(activo)
+  vacaciones_inicio          DateTime?                    @db.Date
+  vacaciones_fin             DateTime?                    @db.Date
+  atencion_feriados          Boolean                      @default(false)
+  calificacion_promedio      Decimal                      @default(0) @db.Decimal(3, 2)
+  cantidad_resenas           Int                          @default(0)
+  created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
+  deleted_at                 DateTime?                    @db.Timestamptz(6)
+  favoritos                  favoritos[]
+  galeria_imagenes           galeria_imagenes[]
+  menus_del_dia              menus_del_dia[]
+  pedidos                    pedidos[]
+  platos                     platos[]
+  promociones                promociones[]
+  reportes                   reportes[]
+  resenas                    resenas[]
+  restaurante_horarios       restaurante_horarios[]
+  restaurante_redes_sociales restaurante_redes_sociales[]
+  restaurante_telefonos      restaurante_telefonos[]
+  solicitudes_restaurante    solicitudes_restaurante?     @relation(fields: [solicitud_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios                   usuarios                     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subcategorias              subcategorias[]
+
+  @@index([ciudad], map: "ix_restaurantes_ciudad")
+  @@index([estado_cuenta], map: "ix_restaurantes_estado_cuenta")
+  @@index([estado_operativo], map: "ix_restaurantes_estado_operativo")
+  @@index([provincia], map: "ix_restaurantes_provincia")
+  @@index([ubicacion_lat, ubicacion_lng], map: "ix_restaurantes_ubicacion")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model solicitudes_restaurante {
+  id                                                      BigInt           @id @default(autoincrement())
+  usuario_id                                              BigInt
+  nombre_comercial                                        String           @db.VarChar(150)
+  descripcion                                             String?
+  direccion                                               String           @db.VarChar(255)
+  ciudad                                                  String           @db.VarChar(100)
+  provincia                                               String           @db.VarChar(100)
+  ubicacion_lat                                           Decimal          @db.Decimal(9, 6)
+  ubicacion_lng                                           Decimal          @db.Decimal(9, 6)
+  telefono_contacto                                       String           @db.VarChar(30)
+  logo_url                                                String?
+  portada_url                                             String?
+  redes_sociales                                          Json             @default("[]")
+  horarios                                                Json             @default("[]")
+  estado                                                  estado_solicitud @default(pendiente)
+  motivo_rechazo                                          String?
+  revisado_por                                            BigInt?
+  revisado_at                                             DateTime?        @db.Timestamptz(6)
+  created_at                                              DateTime         @default(now()) @db.Timestamptz(6)
+  restaurantes                                            restaurantes?
+  usuarios_solicitudes_restaurante_revisado_porTousuarios usuarios?        @relation("solicitudes_restaurante_revisado_porTousuarios", fields: [revisado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuarios_solicitudes_restaurante_usuario_idTousuarios   usuarios         @relation("solicitudes_restaurante_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([estado], map: "ix_solicitudes_estado")
+  @@index([usuario_id], map: "ix_solicitudes_usuario")
+}
+
+model subcategorias {
+  id             BigInt       @id @default(autoincrement())
+  restaurante_id BigInt
+  categoria_id   BigInt
+  nombre         String       @db.VarChar(100)
+  icono_id       BigInt?
+  created_at     DateTime     @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime?    @db.Timestamptz(6)
+  platos         platos[]
+  categorias     categorias   @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  iconos         iconos?      @relation(fields: [icono_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([restaurante_id, categoria_id, nombre])
+  @@index([categoria_id], map: "ix_subcategorias_categoria")
+  @@index([restaurante_id], map: "ix_subcategorias_restaurante")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model usuarios {
+  id                                                                     BigInt                     @id @default(autoincrement())
+  email                                                                  String                     @db.Citext
+  password_hash                                                          String
+  rol                                                                    rol_usuario                @default(comensal)
+  nombre                                                                 String                     @db.VarChar(100)
+  apellido                                                               String                     @db.VarChar(100)
+  foto_perfil_url                                                        String?
+  ubicacion_lat                                                          Decimal?                   @db.Decimal(9, 6)
+  ubicacion_lng                                                          Decimal?                   @db.Decimal(9, 6)
+  radio_busqueda_km                                                      Decimal                    @default(5) @db.Decimal(5, 2)
+  email_verificado                                                       Boolean                    @default(false)
+  estado                                                                 estado_cuenta_usuario      @default(activo)
+  created_at                                                             DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                                                             DateTime                   @default(now()) @db.Timestamptz(6)
+  deleted_at                                                             DateTime?                  @db.Timestamptz(6)
+  auditoria_logs                                                         auditoria_logs[]
+  auth_tokens                                                            auth_tokens[]
+  favoritos                                                              favoritos[]
+  notificaciones                                                         notificaciones[]
+  pedido_historial_estados                                               pedido_historial_estados[]
+  pedidos                                                                pedidos[]
+  reportes_reportes_revisado_porTousuarios                               reportes[]                 @relation("reportes_revisado_porTousuarios")
+  reportes_reportes_usuario_idTousuarios                                 reportes[]                 @relation("reportes_usuario_idTousuarios")
+  resenas                                                                resenas[]
+  restaurantes                                                           restaurantes?
+  solicitudes_restaurante_solicitudes_restaurante_revisado_porTousuarios solicitudes_restaurante[]  @relation("solicitudes_restaurante_revisado_porTousuarios")
+  solicitudes_restaurante_solicitudes_restaurante_usuario_idTousuarios   solicitudes_restaurante[]  @relation("solicitudes_restaurante_usuario_idTousuarios")
+
+  @@index([rol], map: "ix_usuarios_rol")
+  @@index([ubicacion_lat, ubicacion_lng], map: "ix_usuarios_ubicacion")
+}
+
+enum auth_token_tipo {
+  refresh
+  reset_password
+  verificacion_email
+}
+
+enum estado_cuenta_rest {
+  activo
+  suspendido
+  eliminado
+}
+
+enum estado_cuenta_usuario {
+  activo
+  suspendido
+  eliminado
+}
+
+enum estado_disponibilidad {
+  disponible
+  agotado
+}
+
+enum estado_operativo_rest {
+  abierto
+  cerrado
+  cerrado_temporal
+  vacaciones
+}
+
+enum estado_pedido {
+  pendiente
+  aceptado
+  preparando
+  listo
+  entregado
+  rechazado
+  cancelado
+}
+
+enum estado_publicacion {
+  programado
+  publicado
+  oculto
+  agotado
+}
+
+enum estado_reporte {
+  pendiente
+  archivado
+  resuelto
+}
+
+enum estado_resena {
+  visible
+  moderada
+  eliminada
+}
+
+enum estado_solicitud {
+  pendiente
+  aprobada
+  rechazada
+}
+
+enum item_pedido_tipo {
+  menu_dia
+  plato
+}
+
+enum notificacion_tipo {
+  solicitud_aprobada
+  solicitud_rechazada
+  pedido_aceptado
+  pedido_rechazado
+  pedido_estado
+  pedido_listo
+  restaurante_suspendido
+  recuperacion_password
+}
+
+enum red_social_tipo {
+  facebook
+  instagram
+  tiktok
+  twitter_x
+  otro
+}
+
+enum rol_usuario {
+  comensal
+  restaurante
+  administrador
+}
+
+enum telefono_tipo {
+  whatsapp
+  llamadas
+  ambos
+}
