@@ -7,6 +7,8 @@ import { DeleteAccountDto } from './dto/delete-account.dto';
 
 import {
   ConflictException,
+  UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { PrismaService } from '../../core/database/prisma.service';
@@ -74,11 +76,58 @@ const token = await this.jwtTokenService.generateToken({
   }
 
   async login(loginDto: LoginDto) {
-    return {
-      message: 'Inicio de sesión',
-      data: loginDto,
-    };
+  const usuario = await this.prisma.usuarios.findFirst({
+    where: {
+      email: loginDto.email,
+    },
+  });
+
+  if (!usuario) {
+    throw new UnauthorizedException(
+      'Correo electrónico o contraseña incorrectos.',
+    );
   }
+
+  const passwordCorrecta = await this.passwordService.compare(
+    loginDto.password,
+    usuario.password_hash,
+  );
+
+  if (!passwordCorrecta) {
+    throw new UnauthorizedException(
+      'Correo electrónico o contraseña incorrectos.',
+    );
+  }
+
+  if (usuario.estado === 'eliminado') {
+    throw new ForbiddenException(
+      'La cuenta fue eliminada.',
+    );
+  }
+
+  if (usuario.estado === 'suspendido') {
+    throw new ForbiddenException(
+      'La cuenta se encuentra suspendida.',
+    );
+  }
+
+  const token = await this.jwtTokenService.generateToken({
+    sub: usuario.id.toString(),
+    email: usuario.email,
+    role: usuario.rol,
+  });
+
+  const { password_hash, ...userWithoutPassword } = usuario;
+
+  return {
+    message: 'Inicio de sesión exitoso.',
+    access_token: token,
+    user: {
+      ...userWithoutPassword,
+      id: usuario.id.toString(),
+    },
+  };
+}
 
   async logout() {
     return {
@@ -99,9 +148,36 @@ const token = await this.jwtTokenService.generateToken({
       data: resetPasswordDto,
     };
   }
-async validateUser(email: string, password: string): Promise<any> {
-  // TODO: implementar con Prisma y bcrypt
-  return null;
+async validateUser(
+  email: string,
+  password: string,
+): Promise<any> {
+  const usuario = await this.prisma.usuarios.findFirst({
+    where: {
+      email,
+    },
+  });
+
+  if (!usuario) {
+    return null;
+  }
+
+  const passwordCorrecta =
+    await this.passwordService.compare(
+      password,
+      usuario.password_hash,
+    );
+
+  if (!passwordCorrecta) {
+    return null;
+  }
+
+  const { password_hash, ...userWithoutPassword } = usuario;
+
+  return {
+    ...userWithoutPassword,
+    id: usuario.id.toString(),
+  };
 }
   async deleteAccount(deleteAccountDto: DeleteAccountDto) {
     return {
