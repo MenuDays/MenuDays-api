@@ -15,6 +15,12 @@ export class RegisterDto {
   nombre!: string;
 
   @IsNotEmpty()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  apellido!: string;
+
+  @IsNotEmpty()
   @IsEmail()
   @MaxLength(150)
   email!: string;
