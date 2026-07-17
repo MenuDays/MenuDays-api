@@ -300,8 +300,8 @@ model restaurantes {
   nombre_comercial           String                       @db.VarChar(150)
   descripcion                String?
   direccion                  String                       @db.VarChar(255)
-  ciudad                     String                       @db.VarChar(100)
-  provincia                  String                       @db.VarChar(100)
+  ciudad_id                  BigInt
+  ciudad                     ciudades                     @relation(fields: [ciudad_id], references: [id])
   ubicacion_lat              Decimal                      @db.Decimal(9, 6)
   ubicacion_lng              Decimal                      @db.Decimal(9, 6)
   logo_url                   String?
@@ -331,10 +331,9 @@ model restaurantes {
   usuarios                   usuarios                     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   subcategorias              subcategorias[]
 
-  @@index([ciudad], map: "ix_restaurantes_ciudad")
+  @@index([ciudad_id], map: "ix_restaurantes_ciudad")
   @@index([estado_cuenta], map: "ix_restaurantes_estado_cuenta")
   @@index([estado_operativo], map: "ix_restaurantes_estado_operativo")
-  @@index([provincia], map: "ix_restaurantes_provincia")
   @@index([ubicacion_lat, ubicacion_lng], map: "ix_restaurantes_ubicacion")
 }
 
@@ -346,8 +345,8 @@ model solicitudes_restaurante {
   nombre_comercial                                        String           @db.VarChar(150)
   descripcion                                             String?
   direccion                                               String           @db.VarChar(255)
-  ciudad                                                  String           @db.VarChar(100)
-  provincia                                               String           @db.VarChar(100)
+  ciudad_id                                               BigInt
+  ciudad                                                  ciudades         @relation(fields: [ciudad_id], references: [id])
   ubicacion_lat                                           Decimal          @db.Decimal(9, 6)
   ubicacion_lng                                           Decimal          @db.Decimal(9, 6)
   telefono_contacto                                       String           @db.VarChar(30)
@@ -364,6 +363,7 @@ model solicitudes_restaurante {
   usuarios_solicitudes_restaurante_revisado_porTousuarios usuarios?        @relation("solicitudes_restaurante_revisado_porTousuarios", fields: [revisado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios_solicitudes_restaurante_usuario_idTousuarios   usuarios         @relation("solicitudes_restaurante_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@index([ciudad_id], map: "ix_solicitudes_ciudad")
   @@index([estado], map: "ix_solicitudes_estado")
   @@index([usuario_id], map: "ix_solicitudes_usuario")
 }
@@ -416,9 +416,42 @@ model usuarios {
   restaurantes                                                           restaurantes?
   solicitudes_restaurante_solicitudes_restaurante_revisado_porTousuarios solicitudes_restaurante[]  @relation("solicitudes_restaurante_revisado_porTousuarios")
   solicitudes_restaurante_solicitudes_restaurante_usuario_idTousuarios   solicitudes_restaurante[]  @relation("solicitudes_restaurante_usuario_idTousuarios")
+  ciudad_id                                                              BigInt?
+  ciudad                                                                 ciudades?                  @relation(fields: [ciudad_id], references: [id])
 
   @@index([rol], map: "ix_usuarios_rol")
   @@index([ubicacion_lat, ubicacion_lng], map: "ix_usuarios_ubicacion")
+  @@index([ciudad_id], map: "ix_usuarios_ciudad")
+}
+
+model provincias {
+  id     BigInt @id @default(autoincrement())
+  nombre String @unique @db.VarChar(100)
+
+  ciudades ciudades[]
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([nombre], map: "ix_provincias_nombre")
+  @@map("provincias")
+}
+
+model ciudades {
+  id     BigInt @id @default(autoincrement())
+  nombre String @db.VarChar(100)
+
+  provincia_id BigInt
+  provincia    provincias @relation(fields: [provincia_id], references: [id])
+
+  usuarios                usuarios[]
+  restaurantes            restaurantes[]
+  solicitudes_restaurante solicitudes_restaurante[]
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([nombre], map: "ix_ciudades_nombre")
+  @@index([provincia_id])
+  @@map("ciudades")
 }
 
 enum auth_token_tipo {

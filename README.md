@@ -1,98 +1,430 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🍽️ MenuDays API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend oficial de **MenuDays**, desarrollado con **NestJS**, **Prisma ORM** y **PostgreSQL**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+El proyecto sigue una arquitectura modular basada en capas para garantizar escalabilidad, mantenibilidad y facilidad de integración con el frontend.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# 🚀 Tecnologías
 
-## Project setup
+| Tecnología | Uso |
+|------------|-----|
+| NestJS | Framework Backend |
+| TypeScript | Lenguaje principal |
+| Prisma ORM | ORM |
+| PostgreSQL | Base de Datos |
+| JWT | Autenticación |
+| Bcrypt | Hash de contraseñas |
+| Swagger | Documentación API |
+| Railway | Deploy |
+| Cloudinary | Almacenamiento de imágenes |
 
-```bash
-$ npm install
+---
+
+# 🏗 Arquitectura
+
+El proyecto sigue una arquitectura modular.
+
+Cada módulo representa un requerimiento funcional del sistema.
+
+```
+Controller
+      │
+      ▼
+ Service
+      │
+      ▼
+ Prisma ORM
+      │
+      ▼
+ PostgreSQL
 ```
 
-## Compile and run the project
+Cada módulo es independiente y contiene toda su lógica.
 
-```bash
-# development
-$ npm run start
+---
 
-# watch mode
-$ npm run start:dev
+# 📂 Estructura del Proyecto
 
-# production mode
-$ npm run start:prod
+```
+src
+│
+├── core
+│   ├── common
+│   ├── config
+│   ├── constants
+│   └── database
+│
+└── modules
+    ├── auth
+    ├── users
+    ├── locations
+    ├── restaurants
+    ├── restaurant-requests
+    ├── menus
+    ├── dishes
+    ├── categories
+    ├── reviews
+    ├── favorites
+    ├── notifications
+    ├── reports
+    └── ...
 ```
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+# 📦 Estructura de un módulo
 
-# e2e tests
-$ npm run test:e2e
+Todos los módulos deben mantener la misma estructura.
 
-# test coverage
-$ npm run test:cov
+```
+modules
+└── nombre-del-modulo
+    │
+    ├── controllers
+    │      nombre.controller.ts
+    │
+    ├── services
+    │      nombre.service.ts
+    │
+    ├── dto
+    │
+    ├── entities
+    │
+    ├── interfaces
+    │
+    ├── guards
+    │
+    └── nombre.module.ts
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+# 📌 Responsabilidad de cada carpeta
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## controllers/
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+Reciben las solicitudes HTTP.
+
+Responsabilidades:
+
+- Definir endpoints.
+- Validar parámetros.
+- Llamar al Service.
+- Devolver respuestas.
+
+No contienen lógica de negocio.
+
+---
+
+## services/
+
+Contienen toda la lógica de negocio.
+
+Responsabilidades:
+
+- Validaciones.
+- Reglas de negocio.
+- Consultas con Prisma.
+- Excepciones.
+- Integraciones.
+
+Es la capa más importante del proyecto.
+
+---
+
+## dto/
+
+Objetos utilizados para validar datos de entrada.
+
+Ejemplos:
+
+- CreateUserDto
+- UpdateProfileDto
+- LoginDto
+
+Se utilizan junto con:
+
+- class-validator
+- class-transformer
+
+---
+
+## entities/
+
+Representan las respuestas del módulo.
+
+Actualmente son opcionales ya que Prisma devuelve objetos tipados.
+
+---
+
+## interfaces/
+
+Interfaces compartidas por el módulo.
+
+Ejemplo:
+
+- JwtPayload
+- RestaurantFilters
+- UserLocation
+
+---
+
+## guards/
+
+Protección de rutas.
+
+Ejemplos:
+
+- JwtAuthGuard
+- RolesGuard
+
+---
+
+## module.ts
+
+Registra:
+
+- Controllers
+- Services
+- Imports
+- Providers
+
+---
+
+# 🗄 Base de Datos
+
+Motor:
+
+```
+PostgreSQL
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+ORM:
 
-## Resources
+```
+Prisma ORM
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Ubicación del esquema:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```
+prisma/schema.prisma
+```
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# 🌱 Seed
 
-## Stay in touch
+Los datos iniciales se encuentran en:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```
+prisma/
 
-## License
+├── seed.ts
+└── seeds/
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Ejemplos:
+
+- Provincias
+- Ciudades
+- Categorías
+- Administrador
+
+---
+
+# 📖 Swagger
+
+Una vez iniciado el proyecto:
+
+```
+http://localhost:3000/api
+```
+
+Toda la documentación de endpoints se genera automáticamente.
+
+---
+
+# ▶ Ejecutar el proyecto
+
+## Instalar dependencias
+
+```bash
+npm install
+```
+
+---
+
+## Ejecutar en desarrollo
+
+```bash
+npm run start:dev
+```
+
+---
+
+## Compilar
+
+```bash
+npm run build
+```
+
+---
+
+## Ejecutar producción
+
+```bash
+npm run start:prod
+```
+
+---
+
+# 🗄 Prisma
+
+## Generar cliente
+
+```bash
+npx prisma generate
+```
+
+---
+
+## Crear migración
+
+```bash
+npx prisma migrate dev --name nombre_migracion
+```
+
+---
+
+## Aplicar migraciones
+
+```bash
+npx prisma migrate deploy
+```
+
+---
+
+## Ejecutar Seed
+
+```bash
+npx prisma db seed
+```
+
+---
+
+## Abrir Prisma Studio
+
+```bash
+npx prisma studio
+```
+
+---
+
+## Validar esquema
+
+```bash
+npx prisma validate
+```
+
+---
+
+## Formatear schema
+
+```bash
+npx prisma format
+```
+
+---
+
+# 🐘 PostgreSQL
+
+Abrir pgAdmin o utilizar psql.
+
+Consultas útiles:
+
+```sql
+SELECT * FROM usuarios;
+```
+
+```sql
+SELECT * FROM restaurantes;
+```
+
+```sql
+SELECT * FROM provincias;
+```
+
+```sql
+SELECT * FROM ciudades;
+```
+
+---
+
+# 📋 Flujo de desarrollo
+
+Cada requerimiento funcional sigue el mismo flujo:
+
+```
+Endpoint
+
+↓
+
+Controller
+
+↓
+
+DTO
+
+↓
+
+Service
+
+↓
+
+Prisma
+
+↓
+
+PostgreSQL
+```
+
+---
+
+# 📌 Convenciones
+
+- Un módulo por funcionalidad.
+- Toda la lógica de negocio va en Services.
+- Controllers sin lógica.
+- DTOs para validaciones.
+- Prisma únicamente desde Services.
+- Código tipado con TypeScript.
+- Arquitectura modular.
+- Principios SOLID.
+- Clean Code.
+
+---
+
+# 📅 Metodología
+
+El desarrollo se organiza mediante Sprints semanales.
+
+Cada Sprint entrega un flujo funcional completo, permitiendo que el frontend pueda integrarse progresivamente y que el cliente pueda probar funcionalidades reales.
+
+Se prioriza:
+
+- Endpoints REST
+- Reglas de negocio
+- Validaciones
+- Seguridad
+- Integración con frontend
+- Escalabilidad
+- Mantenibilidad
+
+---
+
+# 👨‍💻 Equipo
+
+Proyecto desarrollado utilizando metodología ágil, arquitectura modular y buenas prácticas de desarrollo Backend.
