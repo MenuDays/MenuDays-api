@@ -6,6 +6,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { CloudinaryModule } from './core/integrations/cloudinary/cloudinary.module';
 import { UsersModule } from './modules/users/users.module';
+import { RestaurantRequestsModule } from 'src/modules/restaurant-requests/restaurant-requests.module';
+
 
 @Module({
   imports: [
@@ -13,7 +15,8 @@ import { UsersModule } from './modules/users/users.module';
     CloudinaryModule,
     AuthModule,
     LocationsModule,
-    UsersModule
+    UsersModule,
+    RestaurantRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

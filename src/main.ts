@@ -13,12 +13,15 @@ async function bootstrap() {
 );
   // Validaciones globales
   app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+  new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    forbidNonWhitelisted: true,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+  }),
+);
 
   // Prefijo global de la API
   app.setGlobalPrefix('api');
