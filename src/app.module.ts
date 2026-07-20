@@ -7,12 +7,13 @@ import { LocationsModule } from './modules/locations/locations.module';
 import { CloudinaryModule } from './core/integrations/cloudinary/cloudinary.module';
 import { UsersModule } from './modules/users/users.module';
 import { RestaurantRequestsModule } from 'src/modules/restaurant-requests/restaurant-requests.module';
-
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
     PrismaModule,
     CloudinaryModule,
+    AdminModule,
     AuthModule,
     LocationsModule,
     UsersModule,

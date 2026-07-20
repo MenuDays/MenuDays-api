@@ -58,7 +58,7 @@ export class AuthService {
 const token = await this.jwtTokenService.generateToken({
   sub: usuario.id.toString(),
   email: usuario.email,
-  role: usuario.rol,
+  rol: usuario.rol,
 });
 
   //eliminamos el hash al front
@@ -112,10 +112,10 @@ const token = await this.jwtTokenService.generateToken({
   }
 
   const token = await this.jwtTokenService.generateToken({
-    sub: usuario.id.toString(),
-    email: usuario.email,
-    role: usuario.rol,
-  });
+  sub: usuario.id.toString(),
+  email: usuario.email,
+  rol: usuario.rol,
+});
 
   const { password_hash, ...userWithoutPassword } = usuario;
 
