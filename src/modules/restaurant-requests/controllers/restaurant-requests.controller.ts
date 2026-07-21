@@ -37,7 +37,7 @@ export class RestaurantRequestsController {
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Datos de la solicitud junto con logo y portada.',
+    description: 'Datos de la solicitud junto con el logo y la cédula frontal y dorsal.',
     schema: {
       type: 'object',
       properties: {
@@ -82,10 +82,14 @@ export class RestaurantRequestsController {
           type: 'string',
           format: 'binary',
         },
-        cover: {
-          type: 'string',
-          format: 'binary',
-        },
+        cedulaFront: {
+  type: 'string',
+  format: 'binary',
+},
+cedulaBack: {
+  type: 'string',
+  format: 'binary',
+},
       },
       required: [
         'commercialName',
@@ -96,14 +100,16 @@ export class RestaurantRequestsController {
         'longitude',
         'contactPhone',
         'logo',
-        'cover',
+        'cedulaFront',
+        'cedulaBack',
       ],
     },
   })
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'logo', maxCount: 1 },
-      { name: 'cover', maxCount: 1 },
+      { name: 'cedulaFront', maxCount: 1 },
+      { name: 'cedulaBack', maxCount: 1 },
     ]),
   )
   async createRequest(
@@ -111,9 +117,10 @@ export class RestaurantRequestsController {
     @Body() dto: CreateRestaurantRequestDto,
     @UploadedFiles()
     files: {
-      logo?: Express.Multer.File[];
-      cover?: Express.Multer.File[];
-    },
+  logo?: Express.Multer.File[];
+  cedulaFront?: Express.Multer.File[];
+  cedulaBack?: Express.Multer.File[];
+},
   ) {
     // Procesar redes sociales sin romper nunca el endpoint
     if (dto.socialNetworks) {
@@ -134,7 +141,8 @@ export class RestaurantRequestsController {
       req.user.id,
       dto,
       files.logo?.[0],
-      files.cover?.[0],
+      files.cedulaFront?.[0],
+      files.cedulaBack?.[0],
     );
   }
 

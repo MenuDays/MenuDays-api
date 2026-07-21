@@ -15,4 +15,4 @@ import { RestaurantRequestsService } from './services/restaurant-requests.servic
   providers: [RestaurantRequestsService],
   exports: [RestaurantRequestsService],
 })
-export class RestaurantRequestsModule {}
+export class RestaurantRequestsModule {}  

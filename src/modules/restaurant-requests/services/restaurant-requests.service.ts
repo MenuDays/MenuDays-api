@@ -26,7 +26,8 @@ async createRequest(
   userId: number,
   dto: CreateRestaurantRequestDto,
   logo?: Express.Multer.File,
-  cover?: Express.Multer.File,
+  cedulaFront?: Express.Multer.File,
+  cedulaBack?: Express.Multer.File,
 ) {
   // Verificar que el usuario exista
   const user = await this.prisma.usuarios.findUnique({
@@ -98,16 +99,23 @@ async createRequest(
 
   const logoUrl = logoUpload.secure_url;
 
-  // Subir portada a Cloudinary
-  const coverUpload =
-    await this.cloudinaryService.uploadImage(
-      cover!,
-      CloudinaryFolder.REQUESTS,
-    );
+// Subir cédula frontal
+const cedulaFrontUpload =
+  await this.cloudinaryService.uploadImage(
+    cedulaFront!,
+    CloudinaryFolder.REQUESTS,
+  );
 
-  // Obtener URL de la portada
-  const coverUrl = coverUpload.secure_url;
+const cedulaFrontUrl = cedulaFrontUpload.secure_url;
 
+// Subir cédula dorsal
+const cedulaBackUpload =
+  await this.cloudinaryService.uploadImage(
+    cedulaBack!,
+    CloudinaryFolder.REQUESTS,
+  );
+
+const cedulaBackUrl = cedulaBackUpload.secure_url;
   // Crear el objeto de redes sociales
   const socialNetworks = {
     facebook: dto.socialNetworks?.facebook ?? null,
@@ -130,7 +138,8 @@ async createRequest(
         ubicacion_lng: dto.longitude,
         telefono_contacto: dto.contactPhone,
         logo_url: logoUrl,
-        portada_url: coverUrl,
+cedula_frontal_url: cedulaFrontUrl,
+cedula_dorsal_url: cedulaBackUrl,
         redes_sociales: socialNetworks,
         estado: 'pendiente',
       },

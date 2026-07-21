@@ -353,7 +353,8 @@ model solicitudes_restaurante {
   ubicacion_lng                                           Decimal          @db.Decimal(9, 6)
   telefono_contacto                                       String           @db.VarChar(30)
   logo_url                                                String?
-  portada_url                                             String?
+  cedula_frontal_url                                      String?
+  cedula_dorsal_url                                       String?
   redes_sociales                                          Json             @default("[]")
   horarios                                                Json             @default("[]")
   estado                                                  estado_solicitud @default(pendiente)
