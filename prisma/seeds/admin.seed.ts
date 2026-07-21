@@ -2,7 +2,7 @@ import { PrismaClient, rol_usuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 export async function adminSeed(prisma: PrismaClient) {
-  const email = 'admin@menudays.com';
+  const email = 'alex_poscard@outlook.es';
 
   const adminExists = await prisma.usuarios.findUnique({
     where: {
