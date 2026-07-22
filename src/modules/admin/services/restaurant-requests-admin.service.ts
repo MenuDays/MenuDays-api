@@ -83,7 +83,15 @@ async getAllRequests(filters: {
   });
 
   // Retornar listado
-  return requests;
+  return requests.map((request) => ({
+  ...request,
+  ubicacion_lat: Number(request.ubicacion_lat),
+  ubicacion_lng: Number(request.ubicacion_lng),
+  created_at: request.created_at.toISOString(),
+  revisado_at: request.revisado_at
+    ? request.revisado_at.toISOString()
+    : null,
+}));
 }
 /**
  * Obtener el detalle completo de una solicitud.
@@ -132,6 +140,10 @@ return {
   ...request,
   ubicacion_lat: Number(request.ubicacion_lat),
   ubicacion_lng: Number(request.ubicacion_lng),
+  created_at: request.created_at.toISOString(),
+  revisado_at: request.revisado_at
+    ? request.revisado_at.toISOString()
+    : null,
 };
 }
 
