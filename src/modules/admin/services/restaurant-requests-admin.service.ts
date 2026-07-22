@@ -128,7 +128,11 @@ async getRequestById(id: number) {
   }
 
   // Retornar información completa
-  return request;
+return {
+  ...request,
+  ubicacion_lat: Number(request.ubicacion_lat),
+  ubicacion_lng: Number(request.ubicacion_lng),
+};
 }
 
   /**
