@@ -80,8 +80,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Oña",
-  latitud: new Prisma.Decimal("-3.469817"),
-  longitud: new Prisma.Decimal("-79.154306"),
   provincia_id: mapaProvincias.get("Azuay")!,
 },
 
@@ -127,8 +125,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Sígsig",
-  latitud: new Prisma.Decimal("-3.052590"),
-  longitud: new Prisma.Decimal("-78.793590"),
   provincia_id: mapaProvincias.get("Azuay")!,
 },
 
@@ -164,8 +160,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Chimbo",
-  latitud: new Prisma.Decimal("-1.68338"),
-  longitud: new Prisma.Decimal("-79.02576"),
   provincia_id: mapaProvincias.get("Bolívar")!,
 },
 
@@ -277,8 +271,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Espejo",
-  latitud: new Prisma.Decimal("0.62279"),
-  longitud: new Prisma.Decimal("-77.94068"),
   provincia_id: mapaProvincias.get("Carchi")!,
 },
 
@@ -292,15 +284,11 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Montúfar",
-  latitud: new Prisma.Decimal("0.59691"),
-  longitud: new Prisma.Decimal("-77.84016"),
   provincia_id: mapaProvincias.get("Carchi")!,
 },
 
 {
   nombre: "San Pedro de Huaca",
-  latitud: new Prisma.Decimal("0.60582"),
-  longitud: new Prisma.Decimal("-77.72882"),
   provincia_id: mapaProvincias.get("Carchi")!,
 },
 
@@ -344,8 +332,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Colta",
-  latitud: new Prisma.Decimal("-1.74034"),
-  longitud: new Prisma.Decimal("-78.75343"),
   provincia_id: mapaProvincias.get("Chimborazo")!,
 },
 
@@ -429,8 +415,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Salcedo",
-  latitud: new Prisma.Decimal("-1.04347"),
-  longitud: new Prisma.Decimal("-78.59063"),
   provincia_id: mapaProvincias.get("Cotopaxi")!,
 },
 
@@ -606,15 +590,11 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Quinindé",
-  latitud: new Prisma.Decimal("0.32779"),
-  longitud: new Prisma.Decimal("-79.46583"),
   provincia_id: mapaProvincias.get("Esmeraldas")!,
 },
 
 {
   nombre: "Rioverde",
-  latitud: new Prisma.Decimal("1.06235"),
-  longitud: new Prisma.Decimal("-79.39945"),
   provincia_id: mapaProvincias.get("Esmeraldas")!,
 },
 
@@ -642,8 +622,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Isabela",
-  latitud: new Prisma.Decimal("-0.95542"),
-  longitud: new Prisma.Decimal("-90.96654"),
   provincia_id: mapaProvincias.get("Galápagos")!,
 },
 
@@ -671,8 +649,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Alfredo Baquerizo Moreno (Jujan)",
-  latitud: new Prisma.Decimal("-1.56121"),
-  longitud: new Prisma.Decimal("-79.53361"),
   provincia_id: mapaProvincias.get("Guayas")!,
 },
 
@@ -710,8 +686,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Durán",
-  latitud: new Prisma.Decimal("-2.17452"),
-  longitud: new Prisma.Decimal("-79.83195"),
   provincia_id: mapaProvincias.get("Guayas")!,
 },
 
@@ -733,8 +707,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "General Antonio Elizalde (Bucay)",
-  latitud: new Prisma.Decimal("-2.22369"),
-  longitud: new Prisma.Decimal("-79.14277"),
   provincia_id: mapaProvincias.get("Guayas")!,
 },
 
@@ -756,10 +728,9 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Marcelino Maridueña",
-  latitud: new Prisma.Decimal("-2.20917"),
-  longitud: new Prisma.Decimal("-79.43278"),
   provincia_id: mapaProvincias.get("Guayas")!,
 },
+
 {
   nombre: "Milagro",
   latitud: new Prisma.Decimal("-3.27854"),
@@ -818,8 +789,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Salitre",
-  latitud: new Prisma.Decimal("-1.81766"),
-  longitud: new Prisma.Decimal("-79.81647"),
   provincia_id: mapaProvincias.get("Guayas")!,
 },
 
@@ -870,8 +839,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Antonio Ante",
-  latitud: new Prisma.Decimal("0.33247"),
-  longitud: new Prisma.Decimal("-78.21371"),
   provincia_id: mapaProvincias.get("Imbabura")!,
 },
 
@@ -901,8 +868,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "San Miguel de Urcuquí",
-  latitud: new Prisma.Decimal("0.39973"),
-  longitud: new Prisma.Decimal("-78.19695"),
   provincia_id: mapaProvincias.get("Imbabura")!,
 },
 
@@ -952,8 +917,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Espíndola",
-  latitud: new Prisma.Decimal("-4.29759"),
-  longitud: new Prisma.Decimal("-79.42684"),
   provincia_id: mapaProvincias.get("Loja")!,
 },
 
@@ -1162,8 +1125,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "24 de Mayo",
-  latitud: new Prisma.Decimal("-1.31477"),
-  longitud: new Prisma.Decimal("-80.41856"),
   provincia_id: mapaProvincias.get("Manabí")!,
 },
 
@@ -1358,8 +1319,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Limón Indanza",
-  latitud: new Prisma.Decimal("-3.00086"),
-  longitud: new Prisma.Decimal("-78.44974"),
   provincia_id: mapaProvincias.get("Morona Santiago")!,
 },
 
@@ -1373,8 +1332,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Pablo Sexto",
-  latitud: new Prisma.Decimal("-2.88056"),
-  longitud: new Prisma.Decimal("-78.72694"),
   provincia_id: mapaProvincias.get("Morona Santiago")!,
 },
 
@@ -1420,8 +1377,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Tiwintza",
-  latitud: new Prisma.Decimal("-2.32486"),
-  longitud: new Prisma.Decimal("-78.07164"),
   provincia_id: mapaProvincias.get("Morona Santiago")!,
 },
 
@@ -1464,8 +1419,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Quijos",
-  latitud: new Prisma.Decimal("-0.46126"),
-  longitud: new Prisma.Decimal("-77.88956"),
   provincia_id: mapaProvincias.get("Napo")!,
 },
 
@@ -1569,15 +1522,11 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Mejía",
-  latitud: new Prisma.Decimal("-0.51011"),
-  longitud: new Prisma.Decimal("-78.56712"),
   provincia_id: mapaProvincias.get("Pichincha")!,
 },
 
 {
   nombre: "Pedro Moncayo",
-  latitud: new Prisma.Decimal("0.03989"),
-  longitud: new Prisma.Decimal("-78.14528"),
   provincia_id: mapaProvincias.get("Pichincha")!,
 },
 
@@ -1599,15 +1548,11 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Rumiñahui",
-  latitud: new Prisma.Decimal("-0.33405"),
-  longitud: new Prisma.Decimal("-78.45217"),
   provincia_id: mapaProvincias.get("Pichincha")!,
 },
 
 {
   nombre: "San Miguel de los Bancos",
-  latitud: new Prisma.Decimal("0.02882"),
-  longitud: new Prisma.Decimal("-78.89449"),
   provincia_id: mapaProvincias.get("Pichincha")!,
 },
 
@@ -1678,8 +1623,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Cascales",
-  latitud: new Prisma.Decimal("0.04238"),
-  longitud: new Prisma.Decimal("-77.14083"),
   provincia_id: mapaProvincias.get("Sucumbíos")!,
 },
 
@@ -1701,8 +1644,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Putumayo",
-  latitud: new Prisma.Decimal("0.59318"),
-  longitud: new Prisma.Decimal("-75.40742"),
   provincia_id: mapaProvincias.get("Sucumbíos")!,
 },
 
@@ -1716,8 +1657,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Sucumbíos",
-  latitud: new Prisma.Decimal("0.45262"),
-  longitud: new Prisma.Decimal("-77.54685"),
   provincia_id: mapaProvincias.get("Sucumbíos")!,
 },
 
@@ -1737,8 +1676,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Baños de Agua Santa",
-  latitud: new Prisma.Decimal("-1.39699"),
-  longitud: new Prisma.Decimal("-78.42471"),
   provincia_id: mapaProvincias.get("Tungurahua")!,
 },
 
@@ -1814,8 +1751,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Centinela del Cóndor",
-  latitud: new Prisma.Decimal("-3.44874"),
-  longitud: new Prisma.Decimal("-78.81695"),
   provincia_id: mapaProvincias.get("Zamora Chinchipe")!,
 },
 
@@ -1837,8 +1772,6 @@ export async function seedCiudades(prisma: PrismaClient) {
 
 {
   nombre: "Nangaritza",
-  latitud: new Prisma.Decimal("-4.18634"),
-  longitud: new Prisma.Decimal("-78.61189"),
   provincia_id: mapaProvincias.get("Zamora Chinchipe")!,
 },
 
@@ -1876,20 +1809,10 @@ export async function seedCiudades(prisma: PrismaClient) {
 
   ];
 
-console.log("Actualizando coordenadas...");
-
-for (const ciudad of ciudades) {
-  await prisma.ciudades.updateMany({
-    where: {
-      nombre: ciudad.nombre,
-      provincia_id: ciudad.provincia_id,
-    },
-    data: {
-      latitud: ciudad.latitud,
-      longitud: ciudad.longitud,
-    },
+  await prisma.ciudades.createMany({
+    data: ciudades,
+    skipDuplicates: true,
   });
-}
 
-console.log("✅ Coordenadas actualizadas.");
+  console.log(`✅ ${ciudades.length} ciudades cargadas.`);
 }

@@ -301,7 +301,6 @@ model restaurantes {
   descripcion                String?
   direccion                  String                       @db.VarChar(255)
   ciudad_id                  BigInt
-  ciudad                     ciudades                     @relation(fields: [ciudad_id], references: [id])
   ubicacion_lat              Decimal                      @db.Decimal(9, 6)
   ubicacion_lng              Decimal                      @db.Decimal(9, 6)
   logo_url                   String?
@@ -327,6 +326,7 @@ model restaurantes {
   restaurante_horarios       restaurante_horarios[]
   restaurante_redes_sociales restaurante_redes_sociales[]
   restaurante_telefonos      restaurante_telefonos[]
+  ciudad                     ciudades                     @relation(fields: [ciudad_id], references: [id])
   solicitudes_restaurante    solicitudes_restaurante?     @relation(fields: [solicitud_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios                   usuarios                     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   subcategorias              subcategorias[]
@@ -345,16 +345,11 @@ model solicitudes_restaurante {
   nombre_comercial                                        String           @db.VarChar(150)
   descripcion                                             String?
   direccion                                               String           @db.VarChar(255)
-  provincia_id                                            BigInt
-  provincia                                               provincias       @relation(fields: [provincia_id], references: [id])
   ciudad_id                                               BigInt
-  ciudad                                                  ciudades         @relation(fields: [ciudad_id], references: [id])
   ubicacion_lat                                           Decimal          @db.Decimal(9, 6)
   ubicacion_lng                                           Decimal          @db.Decimal(9, 6)
   telefono_contacto                                       String           @db.VarChar(30)
   logo_url                                                String?
-  cedula_frontal_url                                      String?
-  cedula_dorsal_url                                       String?
   redes_sociales                                          Json             @default("[]")
   horarios                                                Json             @default("[]")
   estado                                                  estado_solicitud @default(pendiente)
@@ -362,7 +357,12 @@ model solicitudes_restaurante {
   revisado_por                                            BigInt?
   revisado_at                                             DateTime?        @db.Timestamptz(6)
   created_at                                              DateTime         @default(now()) @db.Timestamptz(6)
+  provincia_id                                            BigInt
+  cedula_dorsal_url                                       String?
+  cedula_frontal_url                                      String?
   restaurantes                                            restaurantes?
+  ciudad                                                  ciudades         @relation(fields: [ciudad_id], references: [id])
+  provincia                                               provincias       @relation(fields: [provincia_id], references: [id])
   usuarios_solicitudes_restaurante_revisado_porTousuarios usuarios?        @relation("solicitudes_restaurante_revisado_porTousuarios", fields: [revisado_por], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios_solicitudes_restaurante_usuario_idTousuarios   usuarios         @relation("solicitudes_restaurante_usuario_idTousuarios", fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -394,7 +394,6 @@ model subcategorias {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model usuarios {
   id                                                                     BigInt                     @id @default(autoincrement())
-  phoneNumber                                                            String?                    @unique @db.VarChar(20)
   email                                                                  String                     @unique @db.VarChar(150)
   password_hash                                                          String
   rol                                                                    rol_usuario                @default(comensal)
@@ -409,6 +408,8 @@ model usuarios {
   created_at                                                             DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at                                                             DateTime                   @default(now()) @db.Timestamptz(6)
   deleted_at                                                             DateTime?                  @db.Timestamptz(6)
+  ciudad_id                                                              BigInt?
+  phoneNumber                                                            String?                    @unique @db.VarChar(20)
   auditoria_logs                                                         auditoria_logs[]
   auth_tokens                                                            auth_tokens[]
   favoritos                                                              favoritos[]
@@ -421,7 +422,6 @@ model usuarios {
   restaurantes                                                           restaurantes?
   solicitudes_restaurante_solicitudes_restaurante_revisado_porTousuarios solicitudes_restaurante[]  @relation("solicitudes_restaurante_revisado_porTousuarios")
   solicitudes_restaurante_solicitudes_restaurante_usuario_idTousuarios   solicitudes_restaurante[]  @relation("solicitudes_restaurante_usuario_idTousuarios")
-  ciudad_id                                                              BigInt?
   ciudad                                                                 ciudades?                  @relation(fields: [ciudad_id], references: [id])
 
   @@index([rol], map: "ix_usuarios_rol")
@@ -430,30 +430,27 @@ model usuarios {
 }
 
 model provincias {
-  id     BigInt @id @default(autoincrement())
-  nombre String @unique @db.VarChar(100)
-
+  id                      BigInt                    @id @default(autoincrement())
+  nombre                  String                    @unique @db.VarChar(100)
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
   ciudades                ciudades[]
   solicitudes_restaurante solicitudes_restaurante[]
-
-  created_at DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([nombre], map: "ix_provincias_nombre")
   @@map("provincias")
 }
 
 model ciudades {
-  id     BigInt @id @default(autoincrement())
-  nombre String @db.VarChar(100)
-
-  provincia_id BigInt
-  provincia    provincias @relation(fields: [provincia_id], references: [id])
-
-  usuarios                usuarios[]
+  id                      BigInt                    @id @default(autoincrement())
+  nombre                  String                    @db.VarChar(100)
+  provincia_id            BigInt
+  created_at              DateTime                  @default(now()) @db.Timestamptz(6)
+  latitud                 Decimal?                  @db.Decimal(9, 6)
+  longitud                Decimal?                  @db.Decimal(9, 6)
+  provincia               provincias                @relation(fields: [provincia_id], references: [id])
   restaurantes            restaurantes[]
   solicitudes_restaurante solicitudes_restaurante[]
-
-  created_at DateTime @default(now()) @db.Timestamptz(6)
+  usuarios                usuarios[]
 
   @@index([nombre], map: "ix_ciudades_nombre")
   @@index([provincia_id])
