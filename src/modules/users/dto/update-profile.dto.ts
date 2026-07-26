@@ -70,4 +70,19 @@ export class UpdateProfileDto {
     message: 'La ciudad debe ser un número.',
   })
   cityId?: number;
+  @ApiPropertyOptional({
+  example: -2.170998,
+  description: 'Latitud del usuario',
+})
+@IsOptional()
+@Type(() => Number)
+latitude?: number;
+
+@ApiPropertyOptional({
+  example: -79.922359,
+  description: 'Longitud del usuario',
+})
+@IsOptional()
+@Type(() => Number)
+longitude?: number;
 }

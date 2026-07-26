@@ -62,15 +62,20 @@ const token = await this.jwtTokenService.generateToken({
 });
 
   //eliminamos el hash al front
-  const { password_hash, ...userWithoutPassword } = usuario;
+const { password_hash, ...userWithoutPassword } = usuario;
 
-  //esto sería lo que le devuelvo al frontend (o sea la respuesta)
-  return {
+return {
   message: 'Usuario registrado correctamente.',
   access_token: token,
   user: {
     ...userWithoutPassword,
     id: usuario.id.toString(),
+    radio_busqueda_km:
+      usuario.radio_busqueda_km.toNumber(),
+    ubicacion_lat:
+      usuario.ubicacion_lat?.toNumber() ?? null,
+    ubicacion_lng:
+      usuario.ubicacion_lng?.toNumber() ?? null,
   },
 };
   }
@@ -119,14 +124,20 @@ const token = await this.jwtTokenService.generateToken({
 
   const { password_hash, ...userWithoutPassword } = usuario;
 
-  return {
-    message: 'Inicio de sesión exitoso.',
-    access_token: token,
-    user: {
-      ...userWithoutPassword,
-      id: usuario.id.toString(),
-    },
-  };
+return {
+  message: 'Inicio de sesión exitoso.',
+  access_token: token,
+  user: {
+    ...userWithoutPassword,
+    id: usuario.id.toString(),
+    radio_busqueda_km:
+      usuario.radio_busqueda_km.toNumber(),
+    ubicacion_lat:
+      usuario.ubicacion_lat?.toNumber() ?? null,
+    ubicacion_lng:
+      usuario.ubicacion_lng?.toNumber() ?? null,
+  },
+};
 }
 
   async logout() {
@@ -175,9 +186,15 @@ async validateUser(
   const { password_hash, ...userWithoutPassword } = usuario;
 
   return {
-    ...userWithoutPassword,
-    id: usuario.id.toString(),
-  };
+  ...userWithoutPassword,
+  id: usuario.id.toString(),
+  radio_busqueda_km:
+    usuario.radio_busqueda_km.toNumber(),
+  ubicacion_lat:
+    usuario.ubicacion_lat?.toNumber() ?? null,
+  ubicacion_lng:
+    usuario.ubicacion_lng?.toNumber() ?? null,
+};
 }
   async deleteAccount(deleteAccountDto: DeleteAccountDto) {
     return {

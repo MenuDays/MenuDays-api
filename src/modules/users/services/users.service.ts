@@ -65,12 +65,14 @@ export class UsersService {
   updateProfileDto: UpdateProfileDto,
 ) {
   const {
-    firstName,
-    lastName,
-    phoneNumber,
-    provinceId,
-    cityId,
-  } = updateProfileDto;
+  firstName,
+  lastName,
+  phoneNumber,
+  provinceId,
+  cityId,
+  latitude,
+  longitude,
+} = updateProfileDto;
 
   await this.validateUser(userId);
 
@@ -116,6 +118,12 @@ export class UsersService {
       }),
       ...(normalizedPhone !== undefined && {
         phoneNumber: normalizedPhone,
+      }),
+      ...(latitude !== undefined && {
+        ubicacion_lat: latitude,
+      }),
+      ...(longitude !== undefined && {
+        ubicacion_lng: longitude,
       }),
     },
     include: {
@@ -282,6 +290,9 @@ private buildProfileResponse(user: any) {
     status: user.estado,
     emailVerified: user.email_verificado,
     createdAt: user.created_at,
+    latitude: user.ubicacion_lat?.toNumber() ?? null,
+    longitude: user.ubicacion_lng?.toNumber() ?? null,
+    radioBusquedaKm: user.radio_busqueda_km.toNumber(),
   };
 }
 
