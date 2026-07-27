@@ -189,6 +189,24 @@ async approveRequest(
 
   // TODO:
   // Crear restaurante
+  await this.prisma.restaurantes.create({
+  data: {
+    usuario_id: request.usuario_id,
+    solicitud_id: request.id,
+
+    nombre_comercial: request.nombre_comercial,
+    descripcion: request.descripcion,
+
+    direccion: request.direccion,
+    ciudad_id: request.ciudad_id,
+
+    ubicacion_lat: request.ubicacion_lat,
+    ubicacion_lng: request.ubicacion_lng,
+
+    logo_url: request.logo_url,
+    portada_url: null,
+  },
+});
   // Registrar teléfonos
   // Registrar redes sociales
   // Registrar horarios
@@ -199,11 +217,10 @@ async approveRequest(
       id: request.usuario_id,
     },
     data: {
-      rol: 'restaurante',
+      rol: 'restaurante', 
     },
   });
 
-  // Actualizar solicitud
   await this.prisma.solicitudes_restaurante.update({
     where: {
       id: request.id,

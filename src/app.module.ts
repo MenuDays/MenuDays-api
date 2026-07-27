@@ -8,6 +8,7 @@ import { CloudinaryModule } from './core/integrations/cloudinary/cloudinary.modu
 import { UsersModule } from './modules/users/users.module';
 import { RestaurantRequestsModule } from 'src/modules/restaurant-requests/restaurant-requests.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { RestaurantModule } from './modules/restaurants/restaurants.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AdminModule } from './modules/admin/admin.module';
     LocationsModule,
     UsersModule,
     RestaurantRequestsModule,
+    RestaurantModule,
   ],
   controllers: [AppController],
   providers: [AppService],

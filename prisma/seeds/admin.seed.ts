@@ -2,33 +2,46 @@ import { PrismaClient, rol_usuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 export async function adminSeed(prisma: PrismaClient) {
-  const email = 'alex_poscard@outlook.es';
+  const admins = [
+    'alex_poscard@outlook.es',
+    'varelabelencita23@gmail.com',
+  ];
 
-  const adminExists = await prisma.usuarios.findUnique({
-    where: {
-      email,
-    },
-  });
+  const passwordHash = await bcrypt.hash(
+    'Admin123*',
+    12,
+  );
 
-  if (adminExists) {
-    console.log('Administrador ya existe');
-    return;
+  for (const email of admins) {
+    const adminExists =
+      await prisma.usuarios.findUnique({
+        where: {
+          email,
+        },
+      });
+
+    if (adminExists) {
+      console.log(
+        `Administrador ${email} ya existe`,
+      );
+      continue;
+    }
+
+    await prisma.usuarios.create({
+      data: {
+        nombre: 'Administrador',
+        apellido: 'MenuDays',
+        email,
+        password_hash: passwordHash,
+        rol: rol_usuario.administrador,
+        estado: 'activo',
+        email_verificado: true,
+        radio_busqueda_km: 5,
+      },
+    });
+
+    console.log(
+      `Administrador ${email} creado`,
+    );
   }
-
-  const passwordHash = await bcrypt.hash('Admin123*', 12);
-
-  await prisma.usuarios.create({
-    data: {
-      nombre: 'Administrador',
-      apellido: 'MenuDays',
-      email,
-      password_hash: passwordHash,
-      rol: rol_usuario.administrador,
-      estado: 'activo',
-      email_verificado: true,
-      radio_busqueda_km: 5,
-    },
-  });
-
-  console.log('Administrador creado');
 }
