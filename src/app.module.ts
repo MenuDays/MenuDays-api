@@ -10,6 +10,7 @@ import { RestaurantRequestsModule } from 'src/modules/restaurant-requests/restau
 import { AdminModule } from './modules/admin/admin.module';
 import { RestaurantModule } from './modules/restaurants/restaurants.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
+import { MenusModule } from './modules/menus/menus.module';
 
 
 @Module({
@@ -23,6 +24,7 @@ import { GalleryModule } from './modules/gallery/gallery.module';
     RestaurantRequestsModule,
     RestaurantModule,
     GalleryModule,
+    MenusModule,
   ],
   controllers: [AppController],
   providers: [AppService],
