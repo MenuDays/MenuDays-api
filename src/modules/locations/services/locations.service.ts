@@ -26,10 +26,11 @@ export class LocationsService {
   }
 
   /**
-   * Obtener todas las ciudades de una provincia.
-   */
-  async getCiudadesByProvincia(provinciaId: bigint) {
-    const provincia = await this.prisma.provincias.findUnique({
+ * Obtener todas las ciudades de una provincia.
+ */
+async getCiudadesByProvincia(provinciaId: bigint) {
+  const provincia =
+    await this.prisma.provincias.findUnique({
       where: {
         id: provinciaId,
       },
@@ -38,23 +39,36 @@ export class LocationsService {
       },
     });
 
-    if (!provincia) {
-      throw new NotFoundException(
-        'La provincia especificada no existe.',
-      );
-    }
+  if (!provincia) {
+    throw new NotFoundException(
+      'La provincia especificada no existe.',
+    );
+  }
 
-    return await this.prisma.ciudades.findMany({
+  const ciudades =
+    await this.prisma.ciudades.findMany({
       where: {
         provincia_id: provinciaId,
       },
       select: {
         id: true,
         nombre: true,
+        latitud: true,
+        longitud: true,
       },
       orderBy: {
         nombre: 'asc',
       },
     });
-  }
+
+  return ciudades.map((ciudad) => ({
+    ...ciudad,
+    latitud: ciudad.latitud
+      ? Number(ciudad.latitud)
+      : null,
+    longitud: ciudad.longitud
+      ? Number(ciudad.longitud)
+      : null,
+  }));
+}
 }
