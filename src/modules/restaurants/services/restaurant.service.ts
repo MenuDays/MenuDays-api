@@ -23,7 +23,7 @@ export class RestaurantService {
   // Obtener toda la información relacionada del restaurante.
   return this.prisma.restaurantes.findUnique({
     where: {
-      id: restaurant.id,
+      usuario_id: BigInt(userId),
     },
     include: {
       ciudad: {
@@ -90,7 +90,7 @@ async updateProfile(
   const restaurant =
     await this.prisma.restaurantes.findUnique({
       where: {
-        usuario_id: userId,
+        usuario_id: BigInt(userId),
       },
     });
 
