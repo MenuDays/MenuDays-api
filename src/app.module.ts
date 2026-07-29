@@ -12,6 +12,7 @@ import { RestaurantModule } from './modules/restaurants/restaurants.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { PromotionModule } from './modules/promotions/promotions.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 
 @Module({
@@ -27,6 +28,7 @@ import { PromotionModule } from './modules/promotions/promotions.module';
     GalleryModule,
     MenusModule,
     PromotionModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
