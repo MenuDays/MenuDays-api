@@ -14,14 +14,12 @@ export class RestaurantService {
   ) {}
 
   //función para obtener perfil de restaurant
- async getProfile(userId: bigint) {
+async getProfile(userId: bigint) {
   // Buscar el restaurante asociado al usuario autenticado.
-  const restaurant = await this.findRestaurantByUserId(
-    userId,
-  );
+  await this.findRestaurantByUserId(userId);
 
   // Obtener toda la información relacionada del restaurante.
-  return this.prisma.restaurantes.findUnique({
+  const restaurant = await this.prisma.restaurantes.findUnique({
     where: {
       usuario_id: BigInt(userId),
     },
@@ -40,6 +38,32 @@ export class RestaurantService {
       },
     },
   });
+
+  if (!restaurant) {
+    return null;
+  }
+
+  return {
+    ...restaurant,
+    ubicacion_lat:
+      restaurant.ubicacion_lat?.toNumber() ?? null,
+    ubicacion_lng:
+      restaurant.ubicacion_lng?.toNumber() ?? null,
+    calificacion_promedio:
+      restaurant.calificacion_promedio?.toNumber() ?? null,
+
+    ciudad: restaurant.ciudad
+      ? {
+          ...restaurant.ciudad,
+          latitud:
+            restaurant.ciudad.latitud?.toNumber() ??
+            null,
+          longitud:
+            restaurant.ciudad.longitud?.toNumber() ??
+            null,
+        }
+      : null,
+  };
 }
 
 //funcion de modificar perfil

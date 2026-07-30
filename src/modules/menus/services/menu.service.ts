@@ -89,7 +89,7 @@ export class MenuService {
       },
     });
 
-  return menu;
+  return this.serializeMenu(menu);
 }
 
 /**
@@ -112,15 +112,17 @@ async findAll(userId: bigint) {
   }
 
   // Obtener menús
-  return this.prisma.menus_del_dia.findMany({
-    where: {
-      restaurante_id: restaurant.id,
-      deleted_at: null,
-    },
-    orderBy: {
-      created_at: 'desc',
-    },
-  });
+  const menus = await this.prisma.menus_del_dia.findMany({
+  where: {
+    restaurante_id: restaurant.id,
+    deleted_at: null,
+  },
+  orderBy: {
+    created_at: 'desc',
+  },
+});
+
+return menus.map((menu) => this.serializeMenu(menu));
 }
   /**
  * Obtener un menú específico
@@ -161,7 +163,7 @@ async findOne(
     );
   }
 
-  return menu;
+  return this.serializeMenu(menu);
 }
 
   /**
@@ -244,7 +246,8 @@ async update(
   }
 
   // Actualizar menú
-  return this.prisma.menus_del_dia.update({
+  const updatedMenu =
+  await this.prisma.menus_del_dia.update({
     where: {
       id: menu.id,
     },
@@ -272,6 +275,8 @@ async update(
       updated_at: new Date(),
     },
   });
+
+return this.serializeMenu(updatedMenu);
 }
 
  /**
@@ -344,6 +349,12 @@ async remove(
   return {
     message:
       'Menú eliminado correctamente.',
+  };
+}
+private serializeMenu(menu: any) {
+  return {
+    ...menu,
+    precio: menu.precio?.toNumber() ?? null,
   };
 }
 }
