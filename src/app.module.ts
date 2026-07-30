@@ -13,7 +13,7 @@ import { GalleryModule } from './modules/gallery/gallery.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { PromotionModule } from './modules/promotions/promotions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
-
+import { DishesModule } from './modules/dishes/dishes.module';
 
 @Module({
   imports: [
@@ -29,6 +29,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
     MenusModule,
     PromotionModule,
     CategoriesModule,
+    DishesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
