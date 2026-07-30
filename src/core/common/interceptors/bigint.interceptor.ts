@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class BigIntInterceptor implements NestInterceptor {
@@ -19,23 +20,33 @@ export class BigIntInterceptor implements NestInterceptor {
   }
 
   private convertBigInt(value: any): any {
-    if (typeof value === 'bigint') {
-      return value.toString();
-    }
-
-    if (Array.isArray(value)) {
-      return value.map((item) => this.convertBigInt(item));
-    }
-
-    if (value !== null && typeof value === 'object') {
-      return Object.fromEntries(
-        Object.entries(value).map(([key, val]) => [
-          key,
-          this.convertBigInt(val),
-        ]),
-      );
-    }
-
-    return value;
+  // BigInt -> string
+  if (typeof value === 'bigint') {
+    return value.toString();
   }
+
+  // Prisma Decimal -> number
+  if (value instanceof Decimal) {
+    return value.toNumber();
+  }
+
+  // Arrays
+  if (Array.isArray(value)) {
+    return value.map((item) =>
+      this.convertBigInt(item),
+    );
+  }
+
+  // Objetos
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [
+        key,
+        this.convertBigInt(val),
+      ]),
+    );
+  }
+
+  return value;
+}
 }
