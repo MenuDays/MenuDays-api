@@ -14,6 +14,7 @@ import { MenusModule } from './modules/menus/menus.module';
 import { PromotionModule } from './modules/promotions/promotions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { DishesModule } from './modules/dishes/dishes.module';
+import { ExploreModule } from './modules/explore/explore.module';
 
 @Module({
   imports: [
@@ -30,6 +31,8 @@ import { DishesModule } from './modules/dishes/dishes.module';
     PromotionModule,
     CategoriesModule,
     DishesModule,
+    ExploreModule,
+
   ],
   controllers: [AppController],
   providers: [AppService],
