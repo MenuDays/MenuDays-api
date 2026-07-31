@@ -13,7 +13,22 @@ export class SocialNetworksDto {
   tiktok?: string;
   whatsapp?: string;
 }
+export class ScheduleDto {
+  @Type(() => Number)
+  @IsNumber()
+  day!: number;
 
+  @IsOptional()
+  @IsString()
+  openingHour!: string;
+
+  @IsOptional()
+  @IsString()
+  closingHour!: string;
+
+  @IsOptional()
+  closed!: boolean;
+}
 export class CreateRestaurantRequestDto {
   @IsString()
   @IsNotEmpty()
@@ -53,4 +68,7 @@ export class CreateRestaurantRequestDto {
 
   @IsOptional()
   socialNetworks?: SocialNetworksDto;
+
+  @IsOptional()
+  schedules?: ScheduleDto[];
 }

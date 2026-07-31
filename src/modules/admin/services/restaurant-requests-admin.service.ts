@@ -189,7 +189,7 @@ async approveRequest(
 
   // TODO:
   // Crear restaurante
-  await this.prisma.restaurantes.create({
+const createdRestaurant = await this.prisma.restaurantes.create({
   data: {
     usuario_id: request.usuario_id,
     solicitud_id: request.id,
@@ -208,8 +208,59 @@ async approveRequest(
   },
 });
   // Registrar teléfonos
+  await this.prisma.restaurante_telefonos.create({
+  data: {
+    restaurante_id: createdRestaurant.id,
+    telefono: request.telefono_contacto,
+    tipo: 'ambos',
+  },
+});
   // Registrar redes sociales
+  const socialNetworks = request.redes_sociales as Record<string, string>;
+
+for (const [platform, url] of Object.entries(socialNetworks)) {
+  if (!url) continue;
+
+  if (
+    platform === 'facebook' ||
+    platform === 'instagram' ||
+    platform === 'tiktok'
+  ) {
+    await this.prisma.restaurante_redes_sociales.create({
+      data: {
+        restaurante_id: createdRestaurant.id,
+        plataforma: platform,
+        url,
+      },
+    });
+  } else {
+    await this.prisma.restaurante_redes_sociales.create({
+      data: {
+        restaurante_id: createdRestaurant.id,
+        plataforma: 'otro',
+        url,
+      },
+    });
+  }
+}
   // Registrar horarios
+  const schedules = request.horarios as any[];
+
+for (const schedule of schedules) {
+  await this.prisma.restaurante_horarios.create({
+    data: {
+      restaurante_id: createdRestaurant.id,
+      dia_semana: schedule.day,
+      hora_apertura: schedule.openingHour
+        ? new Date(`1970-01-01T${schedule.openingHour}:00`)
+        : null,
+      hora_cierre: schedule.closingHour
+        ? new Date(`1970-01-01T${schedule.closingHour}:00`)
+        : null,
+      cerrado: schedule.closed ?? false,
+    },
+  });
+}
 
   // Cambiar rol del usuario
   await this.prisma.usuarios.update({

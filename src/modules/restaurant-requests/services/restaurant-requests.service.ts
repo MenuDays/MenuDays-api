@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import {
   CloudinaryFolder,
@@ -19,6 +19,7 @@ export class RestaurantRequestsService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+
   /**
  * Crear una nueva solicitud para registrar un restaurante.
  */
@@ -29,6 +30,8 @@ async createRequest(
   cedulaFront?: Express.Multer.File,
   cedulaBack?: Express.Multer.File,
 ) {
+
+  
   // Verificar que el usuario exista
   const user = await this.prisma.usuarios.findUnique({
     where: {
@@ -123,27 +126,36 @@ const cedulaBackUrl = cedulaBackUpload.secure_url;
     tiktok: dto.socialNetworks?.tiktok ?? null,
     whatsapp: dto.socialNetworks?.whatsapp ?? null,
   };
-
-  // Lo más importante: Crear la solicitud del restaurante
+    // Crear el objeto de horarios
+const schedules = (dto.schedules ?? []).map(schedule => ({
+  day: schedule.day,
+  openingHour: schedule.openingHour,
+  closingHour: schedule.closingHour,
+  closed: schedule.closed,
+}));  // Lo más importante: Crear la solicitud del restaurante
   const request =
-    await this.prisma.solicitudes_restaurante.create({
-      data: {
-        usuario_id: BigInt(userId),
-        nombre_comercial: dto.commercialName,
-        descripcion: dto.description,
-        direccion: dto.address,
-        provincia_id: BigInt(dto.provinceId),
-        ciudad_id: BigInt(dto.cityId),
-        ubicacion_lat: dto.latitude,
-        ubicacion_lng: dto.longitude,
-        telefono_contacto: dto.contactPhone,
-        logo_url: logoUrl,
-cedula_frontal_url: cedulaFrontUrl,
-cedula_dorsal_url: cedulaBackUrl,
-        redes_sociales: socialNetworks,
-        estado: 'pendiente',
-      },
-    });
+  await this.prisma.solicitudes_restaurante.create({
+    data: {
+      usuario_id: BigInt(userId),
+      nombre_comercial: dto.commercialName,
+      descripcion: dto.description,
+      direccion: dto.address,
+      provincia_id: BigInt(dto.provinceId),
+      ciudad_id: BigInt(dto.cityId),
+      ubicacion_lat: dto.latitude,
+      ubicacion_lng: dto.longitude,
+      telefono_contacto: dto.contactPhone,
+
+      logo_url: logoUrl,
+      cedula_frontal_url: cedulaFrontUrl,
+      cedula_dorsal_url: cedulaBackUrl,
+
+      redes_sociales: socialNetworks,
+      horarios: schedules, // <-- AGREGAR ESTA LÍNEA
+
+      estado: 'pendiente',
+    },
+  });
 
   // Retornar respuesta
   return {

@@ -78,6 +78,11 @@ export class RestaurantRequestsController {
           example:
             '{"facebook":"https://facebook.com/restaurante","instagram":"https://instagram.com/restaurante","tiktok":"https://tiktok.com/@restaurante","whatsapp":"0991234567"}',
         },
+        schedules: {
+          type: 'string',
+          example:
+            '[{"day":1,"openingHour":"08:00","closingHour":"18:00","closed":false},{"day":2,"openingHour":"08:00","closingHour":"18:00","closed":false}]',
+        },
         logo: {
           type: 'string',
           format: 'binary',
@@ -102,6 +107,7 @@ cedulaBack: {
         'logo',
         'cedulaFront',
         'cedulaBack',
+        'schedules',
       ],
     },
   })
@@ -136,6 +142,21 @@ cedulaBack: {
     } else {
       dto.socialNetworks = {};
     }
+
+    // Procesar horarios sin romper nunca el endpoint
+  if (dto.schedules) {
+    if (typeof dto.schedules === 'string') {
+      try {
+        dto.schedules = JSON.parse(dto.schedules as any);
+      } catch {
+        throw new BadRequestException(
+          'El campo schedules debe ser un JSON válido.',
+        );
+      }
+    }
+  } else {
+    dto.schedules = [];
+  }
 
     return this.restaurantRequestsService.createRequest(
       req.user.id,
