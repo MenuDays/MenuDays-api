@@ -3,7 +3,7 @@ import { seedProvincias } from './seeds/provincias.seed';
 import { seedCiudades } from './seeds/ciudades.seed';
 import { adminSeed } from './seeds/admin.seed';
 import { seedCategories } from './seeds/categorias.seed';
-
+import {seedReportReasons} from './seeds/motivosReportes.seed';
 
 const prisma = new PrismaClient();
 
@@ -14,7 +14,8 @@ async function main() {
   await seedCiudades(prisma);
   await adminSeed(prisma);
   await seedCategories(prisma);
-
+  await seedReportReasons(prisma);
+  
   console.log('✅ Seed de Categorías completado correctamente.');
 }
 

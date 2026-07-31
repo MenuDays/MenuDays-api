@@ -30,24 +30,42 @@ const categories = [
   { nombre: 'Vegana', icono: 'Vegana.png' },
 ];
 
-export async function seedCategories(prisma: PrismaClient) {
+export async function seedCategories(
+  prisma: PrismaClient,
+) {
   console.log('🍽️ Seedeando categorías...');
 
   for (const category of categories) {
-    const icono = await prisma.iconos.create({
-      data: {
+
+    const icono = await prisma.iconos.upsert({
+      where: {
+        nombre: category.nombre,
+      },
+      update: {
+        url: `src/assets/categorias/${category.icono}`,
+      },
+      create: {
         nombre: category.nombre,
         url: `src/assets/categorias/${category.icono}`,
       },
     });
 
-    await prisma.categorias.create({
-      data: {
+    await prisma.categorias.upsert({
+      where: {
+        nombre: category.nombre,
+      },
+      update: {
+        icono_id: icono.id,
+      },
+      create: {
         nombre: category.nombre,
         icono_id: icono.id,
       },
     });
+
   }
 
-  console.log(`✅ ${categories.length} categorías creadas.`);
+  console.log(
+    `✅ ${categories.length} categorías creadas.`,
+  );
 }
