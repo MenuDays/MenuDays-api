@@ -16,6 +16,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { DishesModule } from './modules/dishes/dishes.module';
 import { ExploreModule } from './modules/explore/explore.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 
 @Module({
@@ -35,6 +36,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     DishesModule,
     ExploreModule,
     FavoritesModule,
+    ReviewsModule,
 
   ],
   controllers: [AppController],
