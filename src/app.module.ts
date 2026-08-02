@@ -20,6 +20,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { RestaurantPublicModule } from './modules/public-restaurants/restaurant-public.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { PublicMenusModule } from './modules/public-menus/public-menus.module';
 
 @Module({
   imports: [
@@ -42,10 +43,9 @@ import { OrdersModule } from './modules/orders/orders.module';
     ReportsModule,
     RestaurantPublicModule,
     OrdersModule,
-
+    PublicMenusModule,
   ],
   controllers: [AppController],
   providers: [AppService],
-  
 })
 export class AppModule {}

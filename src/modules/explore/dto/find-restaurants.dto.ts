@@ -4,6 +4,8 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsNumber,
   IsOptional,
+  IsLatitude,
+  IsLongitude,
   IsString,
   Min,
 } from 'class-validator';
@@ -22,9 +24,7 @@ export class FindRestaurantsDto {
     example: '1',
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    value !== undefined ? BigInt(value) : undefined,
-  )
+  @Transform(({ value }) => (value !== undefined ? BigInt(value) : undefined))
   provinceId?: bigint;
 
   @ApiPropertyOptional({
@@ -32,9 +32,7 @@ export class FindRestaurantsDto {
     example: '15',
   })
   @IsOptional()
-  @Transform(({ value }) =>
-    value !== undefined ? BigInt(value) : undefined,
-  )
+  @Transform(({ value }) => (value !== undefined ? BigInt(value) : undefined))
   cityId?: bigint;
 
   @ApiPropertyOptional({
@@ -46,4 +44,22 @@ export class FindRestaurantsDto {
   @IsNumber()
   @Min(0)
   radius?: number;
+
+  @ApiPropertyOptional({
+    description: 'Latitud desde la que se calcula la distancia.',
+    example: -0.180653,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  latitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'Longitud desde la que se calcula la distancia.',
+    example: -78.467834,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  longitude?: number;
 }

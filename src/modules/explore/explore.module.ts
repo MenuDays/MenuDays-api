@@ -6,12 +6,8 @@ import { ExploreController } from './controllers/explore.controller';
 import { ExploreService } from './services/explore.service';
 
 @Module({
-  controllers: [
-    ExploreController,
-  ],
-  providers: [
-    ExploreService,
-    PrismaService,
-  ],
+  controllers: [ExploreController],
+  providers: [ExploreService, PrismaService],
+  exports: [ExploreService],
 })
 export class ExploreModule {}
