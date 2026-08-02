@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../../core/database/prisma.service';
 
 import { UpdateRestaurantDto } from '../dto/update-restaurant.dto';
+import { UpdateRestaurantCategoriesDto } from '../dto/update-restaurant-categories.dto';
 
 @Injectable()
 export class RestaurantService {
@@ -125,5 +126,99 @@ async updateProfile(
   }
 
   return restaurant;
+}
+/**
+ * Obtener las categorías seleccionadas por el restaurante.
+ *
+ * Se valida que el usuario tenga
+ * un restaurante asociado.
+ *
+ * Se retornan las categorías con
+ * la información de su ícono.
+ */
+async getCategories(userId: bigint) {
+  // Buscar restaurante.
+  const restaurant =
+    await this.findRestaurantByUserId(userId);
+
+  // Obtener las categorías seleccionadas.
+  const restaurantCategories =
+    await this.prisma.restaurante_categoria.findMany({
+      where: {
+        restaurante_id: restaurant.id,
+      },
+      include: {
+        categoria: {
+          include: {
+            iconos: true,
+          },
+        },
+      },
+      orderBy: {
+        categoria_id: 'asc',
+      },
+    });
+
+  // Retornar las categorías.
+  return restaurantCategories.map(
+    (restaurantCategory) =>
+      restaurantCategory.categoria,
+  );
+}
+/**
+ * Reemplazar las categorías seleccionadas por el restaurante.
+ *
+ * Se validan las categorías recibidas y
+ * se reemplazan todas las relaciones existentes.
+ *
+ * Se retorna el listado actualizado.
+ */
+async replaceCategories(
+  userId: bigint,
+  updateRestaurantCategoriesDto: UpdateRestaurantCategoriesDto,
+) {
+  // Buscar restaurante.
+  const restaurant =
+    await this.findRestaurantByUserId(userId);
+
+  const { categoryIds } =
+    updateRestaurantCategoriesDto;
+
+  // Verificar que todas las categorías existan.
+  const categories =
+    await this.prisma.categorias.findMany({
+      where: {
+        id: {
+          in: categoryIds.map((id) => BigInt(id)),
+        },
+      },
+    });
+
+  if (categories.length !== categoryIds.length) {
+    throw new NotFoundException(
+      'Una o más categorías no existen.',
+    );
+  }
+
+  // Reemplazar las categorías del restaurante.
+  await this.prisma.$transaction(async (tx) => {
+    // Eliminar relaciones existentes.
+    await tx.restaurante_categoria.deleteMany({
+      where: {
+        restaurante_id: restaurant.id,
+      },
+    });
+
+    // Crear nuevas relaciones.
+    await tx.restaurante_categoria.createMany({
+      data: categoryIds.map((categoryId) => ({
+        restaurante_id: restaurant.id,
+        categoria_id: BigInt(categoryId),
+      })),
+    });
+  });
+
+  // Retornar categorías actualizadas.
+  return this.getCategories(userId);
 }
 }
