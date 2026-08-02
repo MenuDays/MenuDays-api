@@ -30,6 +30,11 @@ export class BigIntInterceptor implements NestInterceptor {
     return value.toNumber();
   }
 
+  // Date -> dejar que Nest lo serialice
+  if (value instanceof Date) {
+    return value;
+  }
+
   // Arrays
   if (Array.isArray(value)) {
     return value.map((item) =>
