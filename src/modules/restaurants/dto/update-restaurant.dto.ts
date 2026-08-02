@@ -1,12 +1,12 @@
 import {
   IsLatitude,
   IsLongitude,
-  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
   MaxLength,
   IsInt,
+  IsBoolean,
 } from 'class-validator';
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -77,4 +77,21 @@ export class UpdateRestaurantDto {
   @IsOptional()
   @IsUrl()
   portadaUrl?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Indica si el restaurante ofrece delivery',
+  })
+  @IsOptional()
+  @IsBoolean()
+  ofreceDelivery?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Pedidos Ya',
+    description: 'Nombre del servicio de delivery',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  nombreDelivery?: string;
 }

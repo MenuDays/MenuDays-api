@@ -37,16 +37,17 @@ model auth_tokens {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias {
-  id            BigInt          @id @default(autoincrement())
-  nombre        String          @unique @db.VarChar(100)
-  icono_id      BigInt?
-  created_at    DateTime        @default(now()) @db.Timestamptz(6)
-  iconos        iconos?         @relation(fields: [icono_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  activo        Boolean         @default(true)
-  platos        platos[]
+  id                     BigInt                  @id @default(autoincrement())
+  nombre                 String                  @unique @db.VarChar(100)
+  icono_id               BigInt?
+  created_at             DateTime                @default(now()) @db.Timestamptz(6)
+  iconos                 iconos?                 @relation(fields: [icono_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  activo                 Boolean                 @default(true)
+  platos                 platos[]
   restaurante_categorias restaurante_categoria[]
+
   @@map("categorias")
-  }
+}
 
 model favoritos {
   id             BigInt       @id @default(autoincrement())
@@ -75,10 +76,10 @@ model galeria_imagenes {
 }
 
 model iconos {
-  id            BigInt          @id @default(autoincrement())
-  nombre        String          @unique @db.VarChar(80)
-  url           String
-  categorias    categorias[]
+  id         BigInt       @id @default(autoincrement())
+  nombre     String       @unique @db.VarChar(80)
+  url        String
+  categorias categorias[]
 
   @@map("iconos")
 }
@@ -152,6 +153,7 @@ model pedidos {
   promocion_id             BigInt?
   observaciones            String?
   precio_total             Decimal                    @db.Decimal(10, 2)
+  metodo_entrega           metodo_entrega             @default(RETIRO_EN_LOCAL)
   estado                   estado_pedido              @default(pendiente)
   mensaje_whatsapp         String?
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
@@ -181,22 +183,22 @@ model plato_imagenes {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model platos {
-  id              BigInt                @id @default(autoincrement())
-  restaurante_id  BigInt
-  categoria_id    BigInt
-  nombre          String                @db.VarChar(150)
-  descripcion     String?
-  precio          Decimal               @db.Decimal(10, 2)
-  estado          estado_disponibilidad @default(disponible)
-  activo          Boolean               @default(true)
-  orden           Int                   @default(0)
-  created_at      DateTime              @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime              @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?             @db.Timestamptz(6)
-  pedidos         pedidos[]
-  plato_imagenes  plato_imagenes[]
-  categorias      categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  restaurantes    restaurantes          @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id             BigInt                @id @default(autoincrement())
+  restaurante_id BigInt
+  categoria_id   BigInt
+  nombre         String                @db.VarChar(150)
+  descripcion    String?
+  precio         Decimal               @db.Decimal(10, 2)
+  estado         estado_disponibilidad @default(disponible)
+  activo         Boolean               @default(true)
+  orden          Int                   @default(0)
+  created_at     DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at     DateTime?             @db.Timestamptz(6)
+  pedidos        pedidos[]
+  plato_imagenes plato_imagenes[]
+  categorias     categorias            @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  restaurantes   restaurantes          @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([categoria_id], map: "ix_platos_categoria")
   @@index([restaurante_id], map: "ix_platos_restaurante")
@@ -217,7 +219,7 @@ model promociones {
   updated_at     DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?    @db.Timestamptz(6)
   restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  pedidos pedidos[]
+  pedidos        pedidos[]
 
   @@index([restaurante_id], map: "ix_promociones_restaurante")
   @@index([fecha_inicio, fecha_fin], map: "ix_promociones_vigencia")
@@ -261,19 +263,18 @@ model resenas {
 
   @@index([usuario_id], map: "ix_resenas_usuario")
 }
+
 //tabla puente para resolver N:M
 model restaurante_categoria {
   restaurante_id BigInt
   categoria_id   BigInt
 
   restaurante restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  categoria    categorias   @relation(fields: [categoria_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  categoria   categorias   @relation(fields: [categoria_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([restaurante_id, categoria_id])
-
   @@index([categoria_id])
   @@index([restaurante_id])
-
   @@map("restaurante_categorias")
 }
 
@@ -332,6 +333,8 @@ model restaurantes {
   atencion_feriados          Boolean                      @default(false)
   calificacion_promedio      Decimal                      @default(0) @db.Decimal(3, 2)
   cantidad_resenas           Int                          @default(0)
+  ofrece_delivery            Boolean                      @default(false)
+  nombre_delivery            String?                      @db.VarChar(150)
   created_at                 DateTime                     @default(now()) @db.Timestamptz(6)
   updated_at                 DateTime                     @default(now()) @db.Timestamptz(6)
   deleted_at                 DateTime?                    @db.Timestamptz(6)
@@ -349,7 +352,7 @@ model restaurantes {
   ciudad                     ciudades                     @relation(fields: [ciudad_id], references: [id])
   solicitudes_restaurante    solicitudes_restaurante?     @relation(fields: [solicitud_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios                   usuarios                     @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  restaurante_categorias restaurante_categoria[]
+  restaurante_categorias     restaurante_categoria[]
 
   @@index([ciudad_id], map: "ix_restaurantes_ciudad")
   @@index([estado_cuenta], map: "ix_restaurantes_estado_cuenta")
@@ -528,6 +531,11 @@ enum item_pedido_tipo {
   menu_dia
   plato
   promocion
+}
+
+enum metodo_entrega {
+  DELIVERY
+  RETIRO_EN_LOCAL
 }
 
 enum notificacion_tipo {

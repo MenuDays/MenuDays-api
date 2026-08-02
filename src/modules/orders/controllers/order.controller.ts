@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../../core/common/decorators/current-user.decorator';
@@ -24,25 +34,46 @@ export class OrderController {
 
   @Get('history')
   @ApiOperation({ summary: 'Historial de mis pedidos' })
-  getHistory(@CurrentUser('id') userId: bigint, @Query() filters: UserOrdersFilterDto) {
+  getHistory(
+    @CurrentUser('id') userId: bigint,
+    @Query() filters: UserOrdersFilterDto,
+  ) {
     return this.orderService.getHistory(userId, filters);
   }
 
   @Get('restaurant')
   @ApiOperation({ summary: 'Pedidos del restaurante' })
-  getRestaurantOrders(@CurrentUser('id') userId: bigint, @Query() filters: RestaurantOrdersFilterDto) {
+  getRestaurantOrders(
+    @CurrentUser('id') userId: bigint,
+    @Query() filters: RestaurantOrdersFilterDto,
+  ) {
     return this.orderService.getRestaurantOrders(userId, filters);
   }
 
   @Get('restaurant/:id')
   @ApiOperation({ summary: 'Detalle de un pedido del restaurante' })
-  getRestaurantOrder(@CurrentUser('id') userId: bigint, @Param('id', ParseIntPipe) orderId: number) {
+  getRestaurantOrder(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+  ) {
     return this.orderService.getRestaurantOrder(userId, orderId);
+  }
+
+  @Get(':id/whatsapp-summary')
+  @ApiOperation({ summary: 'Generar resumen del pedido para WhatsApp' })
+  getWhatsAppSummary(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+  ) {
+    return this.orderService.getWhatsAppSummary(userId, orderId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Detalle de un pedido' })
-  findOne(@CurrentUser('id') userId: bigint, @Param('id', ParseIntPipe) orderId: number) {
+  findOne(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+  ) {
     return this.orderService.findOne(userId, orderId);
   }
 

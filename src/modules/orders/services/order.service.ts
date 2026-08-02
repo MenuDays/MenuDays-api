@@ -5,7 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { estado_pedido, item_pedido_tipo, Prisma } from '@prisma/client';
+import {
+  estado_pedido,
+  item_pedido_tipo,
+  metodo_entrega,
+  Prisma,
+} from '@prisma/client';
 
 import { PrismaService } from '../../../core/database/prisma.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
@@ -30,7 +35,13 @@ export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: bigint, createOrderDto: CreateOrderDto) {
-    const { menuId, promotionId, dishId, observaciones } = createOrderDto;
+    const {
+      menuId,
+      promotionId,
+      dishId,
+      observaciones,
+      metodoEntrega = metodo_entrega.RETIRO_EN_LOCAL,
+    } = createOrderDto;
     this.validateOrderType(menuId, promotionId, dishId);
 
     const user = await this.prisma.usuarios.findUnique({
@@ -49,7 +60,8 @@ export class OrderService {
       const menu = await this.prisma.menus_del_dia.findUnique({
         where: { id: BigInt(menuId) },
       });
-      if (!menu || menu.deleted_at) throw new NotFoundException('El menú no existe.');
+      if (!menu || menu.deleted_at)
+        throw new NotFoundException('El menú no existe.');
       restauranteId = menu.restaurante_id;
       precioTotal = menu.precio;
       tipoItem = item_pedido_tipo.menu_dia;
@@ -69,11 +81,16 @@ export class OrderService {
       const dish = await this.prisma.platos.findUnique({
         where: { id: BigInt(dishId!) },
       });
-      if (!dish || dish.deleted_at) throw new NotFoundException('El plato no existe.');
+      if (!dish || dish.deleted_at)
+        throw new NotFoundException('El plato no existe.');
       restauranteId = dish.restaurante_id;
       precioTotal = dish.precio;
       tipoItem = item_pedido_tipo.plato;
       platoId = dish.id;
+    }
+
+    if (metodoEntrega === metodo_entrega.DELIVERY) {
+      await this.validateDeliveryAvailability(restauranteId);
     }
 
     const order = await this.prisma.$transaction(async (tx) => {
@@ -87,6 +104,7 @@ export class OrderService {
           plato_id: platoId,
           precio_total: precioTotal,
           observaciones,
+          metodo_entrega: metodoEntrega,
         },
       });
       await tx.pedido_historial_estados.create({
@@ -103,6 +121,7 @@ export class OrderService {
       id: order.id,
       estado: order.estado,
       tipo: order.tipo_item,
+      metodoEntrega: order.metodo_entrega,
       fechaPedido: order.created_at,
       total: order.precio_total,
     };
@@ -110,7 +129,10 @@ export class OrderService {
 
   async getHistory(userId: bigint, filters: UserOrdersFilterDto) {
     const orders = await this.prisma.pedidos.findMany({
-      where: { usuario_id: userId, ...(filters.estado && { estado: filters.estado }) },
+      where: {
+        usuario_id: userId,
+        ...(filters.estado && { estado: filters.estado }),
+      },
       include: orderInclude,
       orderBy: { created_at: 'desc' },
     });
@@ -123,7 +145,19 @@ export class OrderService {
     return this.serializeOrder(order);
   }
 
-  async getRestaurantOrders(userId: bigint, filters: RestaurantOrdersFilterDto) {
+  async getWhatsAppSummary(userId: bigint, orderId: number) {
+    const order = await this.findOrderById(BigInt(orderId));
+    this.validateUserOwnership(order, userId);
+
+    return {
+      mensajeWhatsapp: this.buildWhatsAppSummary(order),
+    };
+  }
+
+  async getRestaurantOrders(
+    userId: bigint,
+    filters: RestaurantOrdersFilterDto,
+  ) {
     const restaurant = await this.findRestaurantByUserId(userId);
     const where: Prisma.pedidosWhereInput = { restaurante_id: restaurant.id };
     if (filters.estado) where.estado = filters.estado;
@@ -148,7 +182,11 @@ export class OrderService {
     return this.serializeOrder(order);
   }
 
-  async updateStatus(userId: bigint, orderId: number, dto: UpdateOrderStatusDto) {
+  async updateStatus(
+    userId: bigint,
+    orderId: number,
+    dto: UpdateOrderStatusDto,
+  ) {
     const restaurant = await this.findRestaurantByUserId(userId);
     const order = await this.findOrderById(BigInt(orderId));
     this.validateRestaurantOwnership(order, restaurant.id);
@@ -169,49 +207,108 @@ export class OrderService {
       });
       return updated;
     });
-    return { id: updatedOrder.id, estado: updatedOrder.estado, updatedAt: updatedOrder.updated_at };
+    return {
+      id: updatedOrder.id,
+      estado: updatedOrder.estado,
+      updatedAt: updatedOrder.updated_at,
+    };
   }
 
   private async findRestaurantByUserId(userId: bigint) {
     const restaurant = await this.prisma.restaurantes.findUnique({
       where: { usuario_id: userId },
     });
-    if (!restaurant) throw new NotFoundException('No se encontró un restaurante asociado al usuario.');
+    if (!restaurant)
+      throw new NotFoundException(
+        'No se encontró un restaurante asociado al usuario.',
+      );
     return restaurant;
+  }
+
+  private async validateDeliveryAvailability(restauranteId: bigint) {
+    const restaurant = await this.prisma.restaurantes.findFirst({
+      where: {
+        id: restauranteId,
+        deleted_at: null,
+        estado_cuenta: 'activo',
+      },
+      select: {
+        ofrece_delivery: true,
+        nombre_delivery: true,
+      },
+    });
+
+    if (!restaurant?.ofrece_delivery || !restaurant.nombre_delivery) {
+      throw new BadRequestException(
+        'El restaurante no tiene delivery disponible.',
+      );
+    }
   }
 
   private async findOrderById(orderId: bigint, includeHistory = false) {
     const order = await this.prisma.pedidos.findUnique({
       where: { id: orderId },
       include: includeHistory
-        ? { ...orderInclude, pedido_historial_estados: { orderBy: { created_at: 'asc' } } }
+        ? {
+            ...orderInclude,
+            pedido_historial_estados: { orderBy: { created_at: 'asc' } },
+          }
         : orderInclude,
     });
     if (!order) throw new NotFoundException('No se encontró el pedido.');
     return order;
   }
 
-  private validateUserOwnership(order: { usuario_id: bigint }, userId: bigint) {
-    if (order.usuario_id !== userId) {
-      throw new ForbiddenException('No tienes permisos para acceder a este pedido.');
+  private validateUserOwnership(
+  order: { usuario_id: bigint },
+  userId: bigint | string,
+) {
+  if (order.usuario_id.toString() !== userId.toString()) {
+    throw new ForbiddenException(
+      'No tienes permisos para acceder a este pedido.',
+    );
+  }
+}
+
+  private validateRestaurantOwnership(
+  order: { restaurante_id: bigint },
+  restaurantId: bigint | string,
+) {
+  if (
+    order.restaurante_id.toString() !==
+    restaurantId.toString()
+  ) {
+    throw new ForbiddenException(
+      'No tienes permisos para gestionar este pedido.',
+    );
+  }
+}
+
+  private validateOrderType(
+    menuId?: number,
+    promotionId?: number,
+    dishId?: number,
+  ) {
+    if (
+      [menuId, promotionId, dishId].filter((id) => id !== undefined).length !==
+      1
+    ) {
+      throw new BadRequestException(
+        'El pedido debe estar asociado a un único menú, promoción o plato.',
+      );
     }
   }
 
-  private validateRestaurantOwnership(order: { restaurante_id: bigint }, restaurantId: bigint) {
-    if (order.restaurante_id !== restaurantId) {
-      throw new ForbiddenException('No tienes permisos para gestionar este pedido.');
-    }
-  }
-
-  private validateOrderType(menuId?: number, promotionId?: number, dishId?: number) {
-    if ([menuId, promotionId, dishId].filter((id) => id !== undefined).length !== 1) {
-      throw new BadRequestException('El pedido debe estar asociado a un único menú, promoción o plato.');
-    }
-  }
-
-  private validateStatusTransition(current: estado_pedido, next: estado_pedido) {
+  private validateStatusTransition(
+    current: estado_pedido,
+    next: estado_pedido,
+  ) {
     const transitions: Record<estado_pedido, estado_pedido[]> = {
-      pendiente: [estado_pedido.aceptado, estado_pedido.rechazado, estado_pedido.cancelado],
+      pendiente: [
+        estado_pedido.aceptado,
+        estado_pedido.rechazado,
+        estado_pedido.cancelado,
+      ],
       aceptado: [estado_pedido.preparando, estado_pedido.cancelado],
       preparando: [estado_pedido.listo, estado_pedido.cancelado],
       listo: [estado_pedido.entregado],
@@ -220,7 +317,9 @@ export class OrderService {
       cancelado: [],
     };
     if (!transitions[current].includes(next)) {
-      throw new ConflictException(`No es posible cambiar el estado de "${current}" a "${next}".`);
+      throw new ConflictException(
+        `No es posible cambiar el estado de "${current}" a "${next}".`,
+      );
     }
   }
 
@@ -228,36 +327,107 @@ export class OrderService {
     const product = this.product(order);
     return {
       id: order.id,
-      usuario: { id: order.usuarios.id, nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`, foto: order.usuarios.foto_perfil_url },
-      restaurante: { id: order.restaurantes.id, nombre: order.restaurantes.nombre_comercial },
+      usuario: {
+        id: order.usuarios.id,
+        nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`,
+        foto: order.usuarios.foto_perfil_url,
+      },
+      restaurante: {
+        id: order.restaurantes.id,
+        nombre: order.restaurantes.nombre_comercial,
+      },
       tipo: order.tipo_item,
       nombre: product.nombre,
       imagen: product.imagen,
       estado: order.estado,
+      metodoEntrega: order.metodo_entrega,
       total: order.precio_total,
       fecha: order.created_at,
     };
   }
 
-  private serializeOrder(order: OrderWithRelations & { pedido_historial_estados?: unknown[] }) {
+  private serializeOrder(
+    order: OrderWithRelations & { pedido_historial_estados?: unknown[] },
+  ) {
     const product = this.product(order);
     return {
       id: order.id,
-      usuario: { id: order.usuarios.id, nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`, foto: order.usuarios.foto_perfil_url },
-      restaurante: { id: order.restaurantes.id, nombre: order.restaurantes.nombre_comercial, portada: order.restaurantes.portada_url },
-      pedido: { tipo: order.tipo_item, estado: order.estado, total: order.precio_total, observaciones: order.observaciones, fecha: order.created_at },
+      usuario: {
+        id: order.usuarios.id,
+        nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`,
+        foto: order.usuarios.foto_perfil_url,
+      },
+      restaurante: {
+        id: order.restaurantes.id,
+        nombre: order.restaurantes.nombre_comercial,
+        portada: order.restaurantes.portada_url,
+      },
+      pedido: {
+        tipo: order.tipo_item,
+        estado: order.estado,
+        total: order.precio_total,
+        observaciones: order.observaciones,
+        metodoEntrega: order.metodo_entrega,
+        fecha: order.created_at,
+      },
       producto: product,
-      ...(order.pedido_historial_estados && { historial: order.pedido_historial_estados }),
+      ...(order.pedido_historial_estados && {
+        historial: order.pedido_historial_estados,
+      }),
     };
   }
 
   private product(order: OrderWithRelations) {
     if (order.tipo_item === item_pedido_tipo.menu_dia) {
-      return { id: order.menus_del_dia?.id, nombre: order.menus_del_dia?.nombre, imagen: order.menus_del_dia?.foto_url, precio: order.menus_del_dia?.precio };
+      return {
+        id: order.menus_del_dia?.id,
+        nombre: order.menus_del_dia?.nombre,
+        imagen: order.menus_del_dia?.foto_url,
+        precio: order.menus_del_dia?.precio,
+      };
     }
     if (order.tipo_item === item_pedido_tipo.promocion) {
-      return { id: order.promociones?.id, nombre: order.promociones?.titulo, imagen: order.promociones?.imagen_url, precio: order.promociones?.precio };
+      return {
+        id: order.promociones?.id,
+        nombre: order.promociones?.titulo,
+        imagen: order.promociones?.imagen_url,
+        precio: order.promociones?.precio,
+      };
     }
-    return { id: order.platos?.id, nombre: order.platos?.nombre, imagen: order.platos?.plato_imagenes[0]?.url, precio: order.platos?.precio };
+    return {
+      id: order.platos?.id,
+      nombre: order.platos?.nombre,
+      imagen: order.platos?.plato_imagenes[0]?.url,
+      precio: order.platos?.precio,
+    };
+  }
+
+  private buildWhatsAppSummary(order: OrderWithRelations) {
+    const product = this.product(order);
+    const customerName = `${order.usuarios.nombre} ${order.usuarios.apellido}`;
+    const deliveryMethod =
+      order.metodo_entrega === metodo_entrega.DELIVERY
+        ? `Delivery${
+            order.restaurantes.nombre_delivery
+              ? ` (${order.restaurantes.nombre_delivery})`
+              : ''
+          }`
+        : 'Retiro en el local.';
+
+    const lines = [
+      `Hola, soy ${customerName}.`,
+      '',
+      'Quisiera realizar el siguiente pedido:',
+      '',
+      `- ${product.nombre ?? 'Producto'}`,
+    ];
+
+    if (order.observaciones) {
+      lines.push('', 'Observaciones:', order.observaciones);
+    }
+
+    lines.push('', 'Método de entrega:', deliveryMethod);
+
+    return lines.join('\n');
   }
 }

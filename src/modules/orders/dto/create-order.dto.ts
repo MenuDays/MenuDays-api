@@ -1,13 +1,13 @@
-import {
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import {
   IsInt,
   IsOptional,
   IsString,
   MaxLength,
+  IsEnum,
 } from 'class-validator';
+import { metodo_entrega } from '@prisma/client';
 
 export class CreateOrderDto {
   @ApiPropertyOptional({
@@ -42,4 +42,13 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(500)
   observaciones?: string;
+
+  @ApiPropertyOptional({
+    description: 'Método de entrega del pedido',
+    enum: metodo_entrega,
+    example: metodo_entrega.RETIRO_EN_LOCAL,
+  })
+  @IsOptional()
+  @IsEnum(metodo_entrega)
+  metodoEntrega?: metodo_entrega;
 }
