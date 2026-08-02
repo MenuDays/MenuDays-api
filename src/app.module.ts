@@ -19,6 +19,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { RestaurantPublicModule } from './modules/public-restaurants/restaurant-public.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RestaurantPublicModule } from './modules/public-restaurants/restaurant-
     ReviewsModule,
     ReportsModule,
     RestaurantPublicModule,
+    OrdersModule,
 
   ],
   controllers: [AppController],

@@ -84,6 +84,7 @@ async create(
         descripcion:
           createPromotionDto.descripcion,
         imagen_url: imageUrl,
+        precio: createPromotionDto.precio,
         fecha_inicio: new Date(
           createPromotionDto.fechaInicio,
         ),
@@ -269,6 +270,10 @@ async update(
         promotion.descripcion,
 
       imagen_url: imageUrl,
+
+      precio:
+        updatePromotionDto.precio ??
+        promotion.precio,
 
       fecha_inicio:
         updatePromotionDto.fechaInicio

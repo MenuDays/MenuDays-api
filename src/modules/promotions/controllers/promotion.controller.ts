@@ -61,6 +61,10 @@ export class PromotionController {
         descripcion: {
           type: 'string',
         },
+        precio: {
+          type: 'number',
+          format: 'float',
+        },
         fechaInicio: {
           type: 'string',
           format: 'date',
@@ -73,6 +77,7 @@ export class PromotionController {
       required: [
         'image',
         'titulo',
+        'precio',
         'fechaInicio',
         'fechaFin',
       ],
@@ -151,6 +156,10 @@ export class PromotionController {
         },
         descripcion: {
           type: 'string',
+        },
+        precio: {
+          type: 'number',
+          format: 'float',
         },
         fechaInicio: {
           type: 'string',

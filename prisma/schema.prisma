@@ -149,6 +149,7 @@ model pedidos {
   tipo_item                item_pedido_tipo
   menu_dia_id              BigInt?
   plato_id                 BigInt?
+  promocion_id             BigInt?
   observaciones            String?
   precio_total             Decimal                    @db.Decimal(10, 2)
   estado                   estado_pedido              @default(pendiente)
@@ -158,6 +159,7 @@ model pedidos {
   pedido_historial_estados pedido_historial_estados[]
   menus_del_dia            menus_del_dia?             @relation(fields: [menu_dia_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   platos                   platos?                    @relation(fields: [plato_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  promociones              promociones?               @relation(fields: [promocion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   restaurantes             restaurantes               @relation(fields: [restaurante_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   usuarios                 usuarios                   @relation(fields: [usuario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   resenas                  resenas?
@@ -207,6 +209,7 @@ model promociones {
   titulo         String       @db.VarChar(150)
   descripcion    String?
   imagen_url     String?
+  precio         Decimal      @db.Decimal(10, 2)
   fecha_inicio   DateTime     @db.Date
   fecha_fin      DateTime     @db.Date
   activa         Boolean      @default(true)
@@ -214,6 +217,7 @@ model promociones {
   updated_at     DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?    @db.Timestamptz(6)
   restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pedidos pedidos[]
 
   @@index([restaurante_id], map: "ix_promociones_restaurante")
   @@index([fecha_inicio, fecha_fin], map: "ix_promociones_vigencia")
@@ -523,6 +527,7 @@ enum estado_solicitud {
 enum item_pedido_tipo {
   menu_dia
   plato
+  promocion
 }
 
 enum notificacion_tipo {
