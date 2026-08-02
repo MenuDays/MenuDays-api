@@ -15,6 +15,7 @@ export enum CloudinaryFolder {
   PROMOTIONS = 'promotions',
   USERS = 'users',
   REQUESTS = 'restaurant-requests',
+  CATEGORIES = 'categories',
 }
 
 @Injectable()
