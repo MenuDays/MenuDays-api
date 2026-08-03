@@ -7,7 +7,8 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-
+import { estado_publicacion } from '@prisma/client';
+import { IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateMenuDto {
@@ -33,4 +34,8 @@ export class CreateMenuDto {
 
   @IsDateString()
   fechaFin!: string;
+
+  @IsOptional()
+@IsEnum(estado_publicacion)
+estado?: estado_publicacion;
 }

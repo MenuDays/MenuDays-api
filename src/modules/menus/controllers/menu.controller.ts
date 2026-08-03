@@ -189,6 +189,24 @@ export class MenuController {
   }
 
   /**
+ * Publicar / ocultar un menú.
+ */
+@Patch(':id/toggle')
+@ApiOperation({
+  summary: 'Publicar u ocultar un menú del día',
+})
+async toggle(
+  @CurrentUser('id') userId: bigint,
+
+  @Param('id', ParseIntPipe)
+  menuId: number,
+) {
+  return this.menuService.toggle(
+    userId,
+    menuId,
+  );
+}
+  /**
    * Eliminar menú.
    */
   @Delete(':id')

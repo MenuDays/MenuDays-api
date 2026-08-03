@@ -79,6 +79,10 @@ export class MenuService {
 
         foto_url: imageUrl,
 
+        estado:
+  createMenuDto.estado ??
+  'programado',
+
         fecha_inicio: new Date(
           createMenuDto.fechaInicio,
         ),
@@ -264,6 +268,9 @@ async update(
 
       foto_url: imageUrl,
 
+      estado:
+  updateMenuDto.estado ??
+  menu.estado,
       fecha_inicio: updateMenuDto.fechaInicio
         ? new Date(updateMenuDto.fechaInicio)
         : menu.fecha_inicio,
@@ -355,6 +362,69 @@ private serializeMenu(menu: any) {
   return {
     ...menu,
     precio: menu.precio?.toNumber() ?? null,
+  };
+}
+/**
+ * Publicar u ocultar
+ * un menú del día.
+ */
+async toggle(
+  userId: bigint,
+  menuId: number,
+) {
+  // Buscar restaurante
+  const restaurant =
+    await this.prisma.restaurantes.findUnique({
+      where: {
+        usuario_id: userId,
+      },
+    });
+
+  if (!restaurant) {
+    throw new NotFoundException(
+      'No se encontró el restaurante.',
+    );
+  }
+
+  // Buscar menú
+  const menu =
+    await this.prisma.menus_del_dia.findFirst({
+      where: {
+        id: BigInt(menuId),
+        restaurante_id: restaurant.id,
+        deleted_at: null,
+      },
+    });
+
+  if (!menu) {
+    throw new NotFoundException(
+      'No se encontró el menú.',
+    );
+  }
+
+  // Alternar estado
+  const nuevoEstado =
+    menu.estado === 'publicado'
+      ? 'oculto'
+      : 'publicado';
+
+  const updatedMenu =
+    await this.prisma.menus_del_dia.update({
+      where: {
+        id: menu.id,
+      },
+      data: {
+        estado: nuevoEstado,
+        updated_at: new Date(),
+      },
+    });
+
+  return {
+    message:
+      updatedMenu.estado === 'publicado'
+        ? 'Menú publicado correctamente.'
+        : 'Menú ocultado correctamente.',
+    estado: updatedMenu.estado,
   };
 }
 }
