@@ -4,6 +4,7 @@ import {
   estado_reporte,
   estado_solicitud,
   estado_publicacion,
+  estado_cuenta_rest,
   rol_usuario,
 } from '@prisma/client';
 
@@ -27,32 +28,47 @@ export class DashboardService {
     const [
       usuarios,
       restaurantes,
+      solicitudes,
       menus,
       platos,
       promociones,
       reportes,
       reviews,
       favoritos,
+      topReportes,
+      topResenas,
+      weeklyRequests,
+      growth,
     ] = await Promise.all([
       this.getUsersStats(),
       this.getRestaurantsStats(),
+      this.getRestaurantRequestsStats(),
       this.getMenusStats(),
       this.getDishesStats(),
       this.getPromotionsStats(),
       this.getReportsStats(),
       this.getReviewsStats(),
       this.getFavoritesStats(),
+      this.getTopRestaurantsByReports(),
+      this.getTopRestaurantsByReviews(),
+      this.getWeeklyRequests(),
+      this.getGrowthStats(),
     ]);
 
     return {
       usuarios,
       restaurantes,
+      solicitudes,
       menus,
       platos,
       promociones,
       reportes,
       reviews,
       favoritos,
+      topReportes,
+      topResenas,
+      weeklyRequests,
+      growth,
     };
   }
 
@@ -106,15 +122,40 @@ export class DashboardService {
  */
 private async getRestaurantsStats() {
   const [
-    aprobados,
+    activos,
+    suspendidos,
+    eliminados,
     pendientes,
-    rechazados,
+    aceptadas,
+    rechazadas,
   ] = await Promise.all([
-    this.prisma.restaurantes.count(),
+    this.prisma.restaurantes.count({
+      where: {
+        estado_cuenta: estado_cuenta_rest.activo,
+      },
+    }),
+
+    this.prisma.restaurantes.count({
+      where: {
+        estado_cuenta: estado_cuenta_rest.suspendido,
+      },
+    }),
+
+    this.prisma.restaurantes.count({
+      where: {
+        estado_cuenta: estado_cuenta_rest.eliminado,
+      },
+    }),
 
     this.prisma.solicitudes_restaurante.count({
       where: {
         estado: estado_solicitud.pendiente,
+      },
+    }),
+
+    this.prisma.solicitudes_restaurante.count({
+      where: {
+        estado: estado_solicitud.aprobada,
       },
     }),
 
@@ -126,10 +167,52 @@ private async getRestaurantsStats() {
   ]);
 
   return {
-    aprobados,
-    activos: aprobados,
+    activos,
+    suspendidos,
+    eliminados,
+
+    solicitudes: {
+      total: pendientes + aceptadas + rechazadas,
+      aceptadas,
+      pendientes,
+      rechazadas,
+    },
+  };
+}
+
+private async getRestaurantRequestsStats() {
+  const [
+    total,
     pendientes,
-    rechazados,
+    aceptadas,
+    rechazadas,
+  ] = await Promise.all([
+    this.prisma.solicitudes_restaurante.count(),
+
+    this.prisma.solicitudes_restaurante.count({
+      where: {
+        estado: estado_solicitud.pendiente,
+      },
+    }),
+
+    this.prisma.solicitudes_restaurante.count({
+      where: {
+        estado: estado_solicitud.aprobada,
+      },
+    }),
+
+    this.prisma.solicitudes_restaurante.count({
+      where: {
+        estado: estado_solicitud.rechazada,
+      },
+    }),
+  ]);
+
+  return {
+    total,
+    pendientes,
+    aceptadas,
+    rechazadas,
   };
 }
 
@@ -254,4 +337,164 @@ private async getReviewsStats() {
       total,
     };
   }
+  private async getTopRestaurantsByReports() {
+  const top = await this.prisma.reportes.groupBy({
+    by: ['restaurante_id'],
+    _count: {
+      id: true,
+    },
+    orderBy: {
+      _count: {
+        id: 'desc',
+      },
+    },
+    take: 5,
+  });
+
+  const restaurants = await Promise.all(
+    top.map(async (item) => {
+      const restaurant = await this.prisma.restaurantes.findUnique({
+        where: {
+          id: item.restaurante_id,
+        },
+        select: {
+          id: true,
+          nombre_comercial: true,
+        },
+      });
+
+      return {
+        id: restaurant?.id,
+        nombre: restaurant?.nombre_comercial,
+        reportes: item._count.id,
+      };
+    }),
+  );
+
+  return restaurants;
+}
+private async getTopRestaurantsByReviews() {
+  const top = await this.prisma.resenas.groupBy({
+    by: ['restaurante_id'],
+    _count: {
+      id: true,
+    },
+    orderBy: {
+      _count: {
+        id: 'desc',
+      },
+    },
+    take: 5,
+  });
+
+  const restaurants = await Promise.all(
+    top.map(async (item) => {
+      const restaurant = await this.prisma.restaurantes.findUnique({
+        where: {
+          id: item.restaurante_id,
+        },
+        select: {
+          id: true,
+          nombre_comercial: true,
+        },
+      });
+
+      return {
+        id: restaurant?.id,
+        nombre: restaurant?.nombre_comercial,
+        resenas: item._count.id,
+      };
+    }),
+  );
+
+  return restaurants;
+}
+private async getWeeklyRequests() {
+  const today = new Date();
+
+  const start = new Date(today);
+  start.setDate(today.getDate() - 6);
+  start.setHours(0, 0, 0, 0);
+
+  const requests =
+    await this.prisma.solicitudes_restaurante.findMany({
+      where: {
+        created_at: {
+          gte: start,
+        },
+      },
+      select: {
+        created_at: true,
+      },
+    });
+
+  const days: { fecha: string; total: number }[] = [];
+
+  for (let i = 0; i < 7; i++) {
+    const current = new Date(start);
+    current.setDate(start.getDate() + i);
+
+    const total = requests.filter((request) => {
+      return (
+        request.created_at.getFullYear() === current.getFullYear() &&
+        request.created_at.getMonth() === current.getMonth() &&
+        request.created_at.getDate() === current.getDate()
+      );
+    }).length;
+
+    days.push({
+      fecha: current.toISOString().split('T')[0]!,
+      total,
+    });
+  }
+
+  return days;
+}
+private async getGrowthStats() {
+  const today = new Date();
+
+  const startCurrentWeek = new Date(today);
+  startCurrentWeek.setDate(today.getDate() - 6);
+  startCurrentWeek.setHours(0, 0, 0, 0);
+
+  const startPreviousWeek = new Date(startCurrentWeek);
+  startPreviousWeek.setDate(startPreviousWeek.getDate() - 7);
+
+  const previousWeek =
+    await this.prisma.solicitudes_restaurante.count({
+      where: {
+        created_at: {
+          gte: startPreviousWeek,
+          lt: startCurrentWeek,
+        },
+      },
+    });
+
+  const currentWeek =
+    await this.prisma.solicitudes_restaurante.count({
+      where: {
+        created_at: {
+          gte: startCurrentWeek,
+        },
+      },
+    });
+
+  let porcentaje = 0;
+
+  if (previousWeek > 0) {
+    porcentaje = Number(
+      (
+        ((currentWeek - previousWeek) / previousWeek) *
+        100
+      ).toFixed(2),
+    );
+  }
+
+  return {
+    semanaAnterior: previousWeek,
+    semanaActual: currentWeek,
+    diferencia: currentWeek - previousWeek,
+    porcentaje,
+  };
+}
 }
