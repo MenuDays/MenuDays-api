@@ -120,6 +120,7 @@ export class OrderService {
     return {
       id: order.id,
       estado: order.estado,
+      codigo_unico: order.codigo_unico,
       tipo: order.tipo_item,
       metodoEntrega: order.metodo_entrega,
       fechaPedido: order.created_at,
@@ -267,6 +268,7 @@ export class OrderService {
     throw new ForbiddenException(
       'No tienes permisos para acceder a este pedido.',
     );
+    
   }
 }
 
@@ -327,6 +329,7 @@ export class OrderService {
     const product = this.product(order);
     return {
       id: order.id,
+      codigo_unico: order.codigo_unico,
       usuario: {
         id: order.usuarios.id,
         nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`,
@@ -352,6 +355,7 @@ export class OrderService {
     const product = this.product(order);
     return {
       id: order.id,
+      codigo_unico: order.codigo_unico,
       usuario: {
         id: order.usuarios.id,
         nombre: `${order.usuarios.nombre} ${order.usuarios.apellido}`,
