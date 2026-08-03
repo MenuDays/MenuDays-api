@@ -21,6 +21,8 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { RestaurantPublicModule } from './modules/public-restaurants/restaurant-public.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PublicMenusModule } from './modules/public-menus/public-menus.module';
+import { PublicDishesModule } from './modules/public-dishes/public-dishes.module';
+import { PublicPromotionsModule } from './modules/public-promotions/public-promotions.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { PublicMenusModule } from './modules/public-menus/public-menus.module';
     RestaurantPublicModule,
     OrdersModule,
     PublicMenusModule,
+    PublicDishesModule,
+    PublicPromotionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
