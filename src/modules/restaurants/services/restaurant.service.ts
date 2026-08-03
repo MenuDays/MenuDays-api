@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../../core/database/prisma.service';
-
+import { formatHour } from '../../../core/common/utils/format-hour.util';
 import { UpdateRestaurantDto } from '../dto/update-restaurant.dto';
 import { UpdateRestaurantCategoriesDto } from '../dto/update-restaurant-categories.dto';
 
@@ -44,20 +44,27 @@ export class RestaurantService {
     }
 
     return {
-      ...restaurant,
-      ubicacion_lat: restaurant.ubicacion_lat?.toNumber() ?? null,
-      ubicacion_lng: restaurant.ubicacion_lng?.toNumber() ?? null,
-      calificacion_promedio:
-        restaurant.calificacion_promedio?.toNumber() ?? null,
+  ...restaurant,
 
-      ciudad: restaurant.ciudad
-        ? {
-            ...restaurant.ciudad,
-            latitud: restaurant.ciudad.latitud?.toNumber() ?? null,
-            longitud: restaurant.ciudad.longitud?.toNumber() ?? null,
-          }
-        : null,
-    };
+  restaurante_horarios: restaurant.restaurante_horarios.map((horario) => ({
+    ...horario,
+    hora_apertura: formatHour(horario.hora_apertura),
+    hora_cierre: formatHour(horario.hora_cierre),
+  })),
+
+  ubicacion_lat: restaurant.ubicacion_lat?.toNumber() ?? null,
+  ubicacion_lng: restaurant.ubicacion_lng?.toNumber() ?? null,
+  calificacion_promedio:
+    restaurant.calificacion_promedio?.toNumber() ?? null,
+
+  ciudad: restaurant.ciudad
+    ? {
+        ...restaurant.ciudad,
+        latitud: restaurant.ciudad.latitud?.toNumber() ?? null,
+        longitud: restaurant.ciudad.longitud?.toNumber() ?? null,
+      }
+    : null,
+};
   }
 
   //funcion de modificar perfil

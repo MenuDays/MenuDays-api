@@ -10,7 +10,15 @@ import {
 } from 'class-validator';
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
+import {
+  ValidateNested,
+} from 'class-validator';
+
+import { UpdateRestaurantPhoneDto } from './update-restaurant-phone.dto';
+import { UpdateRestaurantSocialDto } from './update-restaurant-social.dto';
+import { UpdateRestaurantScheduleDto } from './update-restaurant-schedule.dto';
 export class UpdateRestaurantDto {
   @ApiPropertyOptional({
     example: 'La Casa de la Pasta',
@@ -94,4 +102,31 @@ export class UpdateRestaurantDto {
   @IsString()
   @MaxLength(150)
   nombreDelivery?: string;
+
+    @ApiPropertyOptional({
+    type: [UpdateRestaurantPhoneDto],
+    description: 'Teléfonos del restaurante',
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateRestaurantPhoneDto)
+  telefonos?: UpdateRestaurantPhoneDto[];
+
+  @ApiPropertyOptional({
+    type: [UpdateRestaurantSocialDto],
+    description: 'Redes sociales del restaurante',
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateRestaurantSocialDto)
+  redesSociales?: UpdateRestaurantSocialDto[];
+
+  @ApiPropertyOptional({
+    type: [UpdateRestaurantScheduleDto],
+    description: 'Horarios de atención',
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateRestaurantScheduleDto)
+  horarios?: UpdateRestaurantScheduleDto[];
 }

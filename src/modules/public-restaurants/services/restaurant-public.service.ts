@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
-
+import { formatHour } from '../../../core/common/utils/format-hour.util';
 @Injectable()
 export class RestaurantPublicService {
   constructor(private readonly prisma: PrismaService) {}
@@ -295,7 +295,11 @@ export class RestaurantPublicService {
       calificacionPromedio: restaurant.calificacion_promedio,
       cantidadResenas: restaurant.cantidad_resenas,
 
-      horarios: restaurant.restaurante_horarios,
+      horarios: restaurant.restaurante_horarios.map((schedule) => ({
+  ...schedule,
+  hora_apertura: formatHour(schedule.hora_apertura),
+  hora_cierre: formatHour(schedule.hora_cierre),
+})),
 
       telefonos: restaurant.restaurante_telefonos,
 
