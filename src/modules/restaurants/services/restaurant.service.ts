@@ -330,7 +330,7 @@ async getReviews(userId: bigint) {
           id: true,
           nombre: true,
           apellido: true,
-          foto_url: true,
+          foto_perfil_url: true,
         },
       },
     },
