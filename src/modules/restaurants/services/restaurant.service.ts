@@ -8,11 +8,13 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { formatHour } from '../../../core/common/utils/format-hour.util';
 import { UpdateRestaurantDto } from '../dto/update-restaurant.dto';
 import { UpdateRestaurantCategoriesDto } from '../dto/update-restaurant-categories.dto';
-
+import { CloudinaryFolder, CloudinaryService } from '../../../core/integrations/cloudinary/cloudinary.service';
 @Injectable()
 export class RestaurantService {
-  constructor(private readonly prisma: PrismaService) {}
-
+constructor(
+  private readonly prisma: PrismaService,
+  private readonly cloudinaryService: CloudinaryService,
+) {}
   //función para obtener perfil de restaurant
   async getProfile(userId: bigint) {
     // Buscar el restaurante asociado al usuario autenticado.
@@ -215,4 +217,224 @@ export class RestaurantService {
     // Retornar categorías actualizadas.
     return this.getCategories(userId);
   }
+  /**
+ * Obtener la información del dashboard del restaurante autenticado.
+ */
+async getDashboard(userId: bigint) {
+  // Buscar restaurante.
+  const restaurant = await this.findRestaurantByUserId(userId);
+
+  const today = new Date();
+
+  const [
+    platosRegistrados,
+    promocionesActivas,
+    pedidosPendientes,
+    menuPublicadoHoy,
+  ] = await Promise.all([
+    this.prisma.platos.count({
+      where: {
+        restaurante_id: restaurant.id,
+        deleted_at: null,
+      },
+    }),
+
+    this.prisma.promociones.count({
+      where: {
+        restaurante_id: restaurant.id,
+        activa: true,
+        deleted_at: null,
+      },
+    }),
+
+    this.prisma.pedidos.count({
+      where: {
+        restaurante_id: restaurant.id,
+        estado: 'pendiente',
+      },
+    }),
+
+    this.prisma.menus_del_dia.findFirst({
+      where: {
+        restaurante_id: restaurant.id,
+        estado: 'publicado',
+        deleted_at: null,
+        fecha_inicio: {
+          lte: today,
+        },
+        fecha_fin: {
+          gte: today,
+        },
+      },
+      select: {
+        id: true,
+      },
+    }),
+  ]);
+
+  return {
+    restaurante: {
+      id: Number(restaurant.id),
+      nombreComercial: restaurant.nombre_comercial,
+      logoUrl: restaurant.logo_url,
+      portadaUrl: restaurant.portada_url,
+      estadoOperativo: restaurant.estado_operativo,
+    },
+
+    resumen: {
+      calificacionPromedio:
+        restaurant.calificacion_promedio?.toNumber() ?? 0,
+
+      cantidadResenas: restaurant.cantidad_resenas,
+
+      platosRegistrados,
+
+      promocionesActivas,
+
+      pedidosPendientes,
+
+      menuPublicadoHoy: !!menuPublicadoHoy,
+    },
+
+    estadisticas: {
+      resenas: restaurant.cantidad_resenas,
+      promocionesActivas,
+      platosRegistrados,
+    },
+  };
+}
+/**
+ * Obtener todas las reseñas del restaurante autenticado.
+ *
+ * Se valida que el usuario tenga
+ * un restaurante asociado.
+ *
+ * Se retornan únicamente las
+ * reseñas visibles junto con la
+ * información del usuario que las realizó.
+ */
+async getReviews(userId: bigint) {
+  // Buscar restaurante.
+  const restaurant =
+    await this.findRestaurantByUserId(userId);
+
+  // Obtener reseñas.
+  return await this.prisma.resenas.findMany({
+    where: {
+      restaurante_id: restaurant.id,
+      estado: 'visible',
+    },
+    include: {
+      usuarios: {
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          foto_url: true,
+        },
+      },
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+  });
+}
+/**
+ * Actualizar logo del restaurante.
+ */
+async uploadLogo(
+  userId: bigint,
+  file: Express.Multer.File,
+) {
+  const restaurant =
+    await this.findRestaurantByUserId(userId);
+
+  // Eliminar logo anterior si existe.
+  if (restaurant.logo_url) {
+    try {
+      const publicId =
+        this.cloudinaryService.extractPublicId(
+          restaurant.logo_url,
+        );
+
+      await this.cloudinaryService.deleteImage(
+        publicId,
+      );
+    } catch {
+      // Si falla la eliminación no se cancela la subida.
+    }
+  }
+
+  // Subir nuevo logo.
+  const image =
+    await this.cloudinaryService.uploadImage(
+      file,
+      CloudinaryFolder.RESTAURANTS,
+    );
+
+  // Guardar URL.
+  await this.prisma.restaurantes.update({
+    where: {
+      id: restaurant.id,
+    },
+    data: {
+      logo_url: image.secure_url,
+    },
+  });
+
+  return {
+    message:
+      'Logo actualizado correctamente.',
+    logoUrl: image.secure_url,
+  };
+}
+/**
+ * Actualizar portada del restaurante.
+ */
+async uploadCover(
+  userId: bigint,
+  file: Express.Multer.File,
+) {
+  const restaurant =
+    await this.findRestaurantByUserId(userId);
+
+  // Eliminar portada anterior si existe.
+  if (restaurant.portada_url) {
+    try {
+      const publicId =
+        this.cloudinaryService.extractPublicId(
+          restaurant.portada_url,
+        );
+
+      await this.cloudinaryService.deleteImage(
+        publicId,
+      );
+    } catch {
+      // Si falla la eliminación no se cancela la subida.
+    }
+  }
+
+  // Subir nueva portada.
+  const image =
+    await this.cloudinaryService.uploadImage(
+      file,
+      CloudinaryFolder.RESTAURANTS,
+    );
+
+  // Guardar URL.
+  await this.prisma.restaurantes.update({
+    where: {
+      id: restaurant.id,
+    },
+    data: {
+      portada_url: image.secure_url,
+    },
+  });
+
+  return {
+    message:
+      'Portada actualizada correctamente.',
+    portadaUrl: image.secure_url,
+  };
+}
 }

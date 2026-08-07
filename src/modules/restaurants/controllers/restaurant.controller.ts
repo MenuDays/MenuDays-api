@@ -6,7 +6,19 @@ import {
   Request,
   UseGuards,
   Put,
+  Post,
 } from '@nestjs/common';
+import {
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
+
+import {
+  ApiBody,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -78,4 +90,78 @@ export class RestaurantController {
       updateRestaurantCategoriesDto,
     );
   }
+  @Get('dashboard')
+@ApiOperation({
+  summary: 'Obtener el dashboard del restaurante autenticado',
+})
+getDashboard(@Request() req: any) {
+  return this.restaurantService.getDashboard(
+    req.user.id,
+  );
+}
+@Get('reviews')
+@ApiOperation({
+  summary:
+    'Obtener todas las reseñas del restaurante autenticado',
+})
+getReviews(@Request() req: any) {
+  return this.restaurantService.getReviews(
+    req.user.id,
+  );
+}
+@Post('profile/logo')
+@ApiOperation({
+  summary: 'Actualizar logo del restaurante',
+})
+@UseInterceptors(FileInterceptor('image'))
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['image'],
+    properties: {
+      image: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+uploadLogo(
+  @Request() req: any,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  return this.restaurantService.uploadLogo(
+    req.user.id,
+    file,
+  );
+}
+
+@Post('profile/cover')
+@ApiOperation({
+  summary: 'Actualizar portada del restaurante',
+})
+@UseInterceptors(FileInterceptor('image'))
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['image'],
+    properties: {
+      image: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+uploadCover(
+  @Request() req: any,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  return this.restaurantService.uploadCover(
+    req.user.id,
+    file,
+  );
+}
 }
