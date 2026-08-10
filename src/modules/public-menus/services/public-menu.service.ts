@@ -38,17 +38,18 @@ export class PublicMenuService {
         },
       },
       include: {
-        restaurantes: {
-          select: {
-            id: true,
-            nombre_comercial: true,
-            logo_url: true,
-            estado_operativo: true,
-            calificacion_promedio: true,
-            cantidad_resenas: true,
-          },
-        },
-      },
+  restaurantes: {
+    select: {
+      id: true,
+      nombre_comercial: true,
+      logo_url: true,
+      estado_operativo: true,
+      calificacion_promedio: true,
+      cantidad_resenas: true,
+    },
+  },
+  categorias: true,
+},
       orderBy: [{ fecha_fin: 'asc' }, { created_at: 'desc' }],
     });
 
@@ -86,30 +87,40 @@ export class PublicMenuService {
         },
       },
       include: {
-        restaurantes: {
-          select: {
-            id: true,
-            nombre_comercial: true,
-            descripcion: true,
-            direccion: true,
-            logo_url: true,
-            portada_url: true,
-            ubicacion_lat: true,
-            ubicacion_lng: true,
-            estado_operativo: true,
-            calificacion_promedio: true,
-            cantidad_resenas: true,
-            ciudad: {
-              select: {
-                id: true,
-                nombre: true,
-                provincia: { select: { id: true, nombre: true } },
-              },
+  restaurantes: {
+    select: {
+      id: true,
+      nombre_comercial: true,
+      descripcion: true,
+      direccion: true,
+      logo_url: true,
+      portada_url: true,
+      ubicacion_lat: true,
+      ubicacion_lng: true,
+      estado_operativo: true,
+      calificacion_promedio: true,
+      cantidad_resenas: true,
+      ciudad: {
+        select: {
+          id: true,
+          nombre: true,
+          provincia: {
+            select: {
+              id: true,
+              nombre: true,
             },
-            restaurante_horarios: { orderBy: { dia_semana: 'asc' } },
           },
         },
       },
+      restaurante_horarios: {
+        orderBy: {
+          dia_semana: 'asc',
+        },
+      },
+    },
+  },
+  categorias: true,
+},
     });
 
     if (!menu) {
