@@ -143,28 +143,32 @@ export class RestaurantPublicService {
    * publicados del restaurante.
    */
   private async getMenus(restaurantId: bigint) {
-    // Buscar menús.
+  const today = new Date();
 
-    const menus = await this.prisma.menus_del_dia.findMany({
-      where: {
-        restaurante_id: restaurantId,
-        deleted_at: null,
-        estado: 'publicado',
+  const menus = await this.prisma.menus_del_dia.findMany({
+    where: {
+      restaurante_id: restaurantId,
+      deleted_at: null,
+      estado: 'publicado',
+      fecha_inicio: {
+        lte: today,
       },
-      orderBy: [
-        {
-          fecha_inicio: 'desc',
-        },
-        {
-          created_at: 'desc',
-        },
-      ],
-    });
+      fecha_fin: {
+        gte: today,
+      },
+    },
+    orderBy: [
+      {
+        fecha_inicio: 'desc',
+      },
+      {
+        created_at: 'desc',
+      },
+    ],
+  });
 
-    // Retornar.
-
-    return menus;
-  }
+  return menus;
+}
   /**
    * Obtener los platos
    * visibles del restaurante.
