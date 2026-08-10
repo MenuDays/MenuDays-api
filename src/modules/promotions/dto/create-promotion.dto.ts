@@ -9,6 +9,10 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  IsInt,
+  IsPositive,
+  Min,
+  IsNumber,
 } from 'class-validator';
 
 export class CreatePromotionDto {
@@ -21,6 +25,15 @@ export class CreatePromotionDto {
   @MaxLength(150)
   titulo!: string;
 
+
+  @ApiPropertyOptional({
+  example: 1,
+  description: 'ID de la categoría de la promoción.',
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  categoriaId?: number;
   @ApiPropertyOptional({
     example: 'Válido de lunes a jueves.',
     description:
@@ -30,6 +43,13 @@ export class CreatePromotionDto {
   @IsString()
   descripcion?: string;
 
+  @ApiProperty({
+  example: 8.99,
+  description: 'Precio de la promoción.',
+})
+@IsNumber()
+@Min(0)
+precio!: number;
   @ApiProperty({
     example: '2026-07-28',
     description:

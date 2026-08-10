@@ -71,7 +71,7 @@ export class MenuService {
         restaurante_id: restaurant.id,
 
         nombre: createMenuDto.nombre,
-
+        categoria_id: BigInt(createMenuDto.categoriaId),
         descripcion:
           createMenuDto.descripcion,
 
@@ -259,6 +259,10 @@ async update(
       nombre:
         updateMenuDto.nombre ?? menu.nombre,
 
+      categoria_id:
+      updateMenuDto.categoriaId !== undefined
+    ? BigInt(updateMenuDto.categoriaId)
+    : menu.categoria_id,
       descripcion:
         updateMenuDto.descripcion ??
         menu.descripcion,

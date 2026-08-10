@@ -44,6 +44,8 @@ model categorias {
   iconos                 iconos?                 @relation(fields: [icono_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   activo                 Boolean                 @default(true)
   platos                 platos[]
+  menus_del_dia          menus_del_dia[]
+  promociones            promociones[]
   restaurante_categorias restaurante_categoria[]
 
   @@map("categorias")
@@ -90,6 +92,7 @@ model menus_del_dia {
   id             BigInt             @id @default(autoincrement())
   restaurante_id BigInt
   nombre         String             @db.VarChar(150)
+  categoria_id   BigInt?
   descripcion    String?
   precio         Decimal            @db.Decimal(10, 2)
   foto_url       String?
@@ -100,9 +103,11 @@ model menus_del_dia {
   updated_at     DateTime           @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?          @db.Timestamptz(6)
   restaurantes   restaurantes       @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  categorias     categorias?         @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pedidos        pedidos[]
 
   @@index([restaurante_id], map: "ix_menus_restaurante")
+  @@index([categoria_id], map: "ix_menus_categoria")
   @@index([fecha_inicio, fecha_fin], map: "ix_menus_vigencia")
 }
 
@@ -209,6 +214,7 @@ model promociones {
   id             BigInt       @id @default(autoincrement())
   restaurante_id BigInt
   titulo         String       @db.VarChar(150)
+  categoria_id   BigInt?
   descripcion    String?
   imagen_url     String?
   precio         Decimal      @db.Decimal(10, 2)
@@ -219,6 +225,7 @@ model promociones {
   updated_at     DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?    @db.Timestamptz(6)
   restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  categorias categorias? @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pedidos        pedidos[]
 
   @@index([restaurante_id], map: "ix_promociones_restaurante")

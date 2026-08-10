@@ -83,6 +83,9 @@ async create(
         titulo: createPromotionDto.titulo,
         descripcion:
           createPromotionDto.descripcion,
+        categoria_id: createPromotionDto.categoriaId
+  ? BigInt(createPromotionDto.categoriaId)
+  : null,
         imagen_url: imageUrl,
         precio: createPromotionDto.precio,
         fecha_inicio: new Date(
@@ -274,7 +277,12 @@ async update(
       precio:
         updatePromotionDto.precio ??
         promotion.precio,
-
+      categoria_id:
+  updatePromotionDto.categoriaId !== undefined
+    ? updatePromotionDto.categoriaId !== null
+      ? BigInt(updatePromotionDto.categoriaId)
+      : null
+    : promotion.categoria_id,
       fecha_inicio:
         updatePromotionDto.fechaInicio
           ? new Date(
