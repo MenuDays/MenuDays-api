@@ -23,6 +23,7 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PublicMenusModule } from './modules/public-menus/public-menus.module';
 import { PublicDishesModule } from './modules/public-dishes/public-dishes.module';
 import { PublicPromotionsModule } from './modules/public-promotions/public-promotions.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PublicPromotionsModule } from './modules/public-promotions/public-promo
     PublicMenusModule,
     PublicDishesModule,
     PublicPromotionsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

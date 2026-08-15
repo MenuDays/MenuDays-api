@@ -385,7 +385,7 @@ async uploadLogo(
   return {
     message:
       'Logo actualizado correctamente.',
-    logoUrl: image.secure_url,
+    logo_url: image.secure_url,
   };
 }
 /**
@@ -434,7 +434,7 @@ async uploadCover(
   return {
     message:
       'Portada actualizada correctamente.',
-    portadaUrl: image.secure_url,
+    portada_url: image.secure_url,
   };
 }
 }

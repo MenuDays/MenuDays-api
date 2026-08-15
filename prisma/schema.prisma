@@ -464,6 +464,7 @@ model ciudades {
   solicitudes_restaurante solicitudes_restaurante[]
   usuarios                usuarios[]
 
+  @@unique([nombre, provincia_id], map: "ux_ciudades_nombre_provincia")
   @@index([nombre], map: "ix_ciudades_nombre")
   @@index([provincia_id])
   @@map("ciudades")
@@ -546,6 +547,7 @@ enum metodo_entrega {
 }
 
 enum notificacion_tipo {
+  solicitud_nueva
   solicitud_aprobada
   solicitud_rechazada
   pedido_aceptado

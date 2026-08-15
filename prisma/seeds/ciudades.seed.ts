@@ -1876,20 +1876,28 @@ export async function seedCiudades(prisma: PrismaClient) {
 
   ];
 
-console.log("Actualizando coordenadas...");
+console.log("Insertando/actualizando ciudades...");
 
 for (const ciudad of ciudades) {
-  await prisma.ciudades.updateMany({
+  await prisma.ciudades.upsert({
     where: {
+      nombre_provincia_id: {
+        nombre: ciudad.nombre,
+        provincia_id: ciudad.provincia_id,
+      },
+    },
+    update: {
+      latitud: ciudad.latitud,
+      longitud: ciudad.longitud,
+    },
+    create: {
       nombre: ciudad.nombre,
       provincia_id: ciudad.provincia_id,
-    },
-    data: {
       latitud: ciudad.latitud,
       longitud: ciudad.longitud,
     },
   });
 }
 
-console.log("✅ Coordenadas actualizadas.");
+console.log("✅ Ciudades sembradas/actualizadas (idempotente, sin duplicados gracias al constraint único nombre+provincia_id).");
 }

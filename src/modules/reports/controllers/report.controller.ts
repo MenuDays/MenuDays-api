@@ -18,6 +18,10 @@ import {
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+
+import { rol_usuario } from '@prisma/client';
 
 import { CurrentUser } from '../../../core/common/decorators/current-user.decorator';
 
@@ -31,9 +35,7 @@ import { ReportsService } from '../services/report.service';
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class ReportsController {
-  constructor(
-    private readonly reportsService: ReportsService,
-  ) {}
+  constructor(private readonly reportsService: ReportsService) {}
 
   /**
    * Crear un reporte.
@@ -49,16 +51,26 @@ export class ReportsController {
     @CurrentUser('id') userId: bigint,
     @Body() createReportDto: CreateReportDto,
   ) {
-    return this.reportsService.create(
-      userId,
-      createReportDto,
-    );
+    return this.reportsService.create(userId, createReportDto);
+  }
+
+  /**
+   * Obtener los motivos de reporte disponibles.
+   */
+  @Get('reports/motivos')
+  @ApiOperation({
+    summary: 'Obtener motivos de reporte disponibles',
+  })
+  getMotivos() {
+    return this.reportsService.getMotivos();
   }
 
   /**
    * Obtener todos los reportes.
    */
   @Get('admin/reports')
+  @UseGuards(RolesGuard)
+  @Roles(rol_usuario.administrador)
   @ApiOperation({
     summary: 'Obtener reportes',
   })
@@ -70,6 +82,8 @@ export class ReportsController {
    * Obtener un reporte por ID.
    */
   @Get('admin/reports/:id')
+  @UseGuards(RolesGuard)
+  @Roles(rol_usuario.administrador)
   @ApiOperation({
     summary: 'Obtener detalle del reporte',
   })
@@ -82,15 +96,15 @@ export class ReportsController {
     @Param('id', ParseIntPipe)
     id: number,
   ) {
-    return this.reportsService.findOne(
-      BigInt(id),
-    );
+    return this.reportsService.findOne(BigInt(id));
   }
 
   /**
    * Gestionar un reporte.
    */
   @Patch('admin/reports/:id')
+  @UseGuards(RolesGuard)
+  @Roles(rol_usuario.administrador)
   @ApiOperation({
     summary: 'Gestionar reporte',
   })

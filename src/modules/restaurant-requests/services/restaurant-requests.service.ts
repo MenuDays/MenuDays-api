@@ -9,6 +9,7 @@ import {
   CloudinaryFolder,
   CloudinaryService,
 } from '../../../core/integrations/cloudinary/cloudinary.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 import { CreateRestaurantRequestDto } from '../dto/create-restaurant-request.dto';
 
@@ -17,6 +18,7 @@ export class RestaurantRequestsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
 
@@ -157,6 +159,11 @@ const schedules = (dto.schedules ?? []).map(schedule => ({
     },
   });
 
+  // Avisar a los administradores que hay una solicitud nueva para
+  // revisar. Si falla (ej. no hay admins cargados todavía), no debe
+  // tumbar la creación de la solicitud -- se registra y se sigue.
+  await this.notifyAdminsOfNewRequest(request.id, dto.commercialName);
+
   // Retornar respuesta
   return {
     success: true,
@@ -166,6 +173,49 @@ const schedules = (dto.schedules ?? []).map(schedule => ({
       estado: request.estado,
     },
   };
+}
+
+  /**
+ * Crea una notificación para cada usuario con rol administrador,
+ * avisando que llegó una solicitud de restaurante nueva para revisar.
+ */
+private async notifyAdminsOfNewRequest(
+  requestId: bigint,
+  commercialName: string,
+) {
+
+  try {
+    const admins = await this.prisma.usuarios.findMany({
+      where: {
+        rol: 'administrador',
+        estado: 'activo',
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (admins.length === 0) {
+      return;
+    }
+
+    await this.prisma.notificaciones.createMany({
+      data: admins.map((admin) => ({
+        usuario_id: admin.id,
+        tipo: 'solicitud_nueva' as const,
+        titulo: 'Nueva solicitud de restaurante',
+        mensaje: `"${commercialName}" solicitó registrarse como restaurante y está esperando revisión.`,
+        referencia_tipo: 'solicitud_restaurante',
+        referencia_id: requestId,
+      })),
+    });
+  } catch (error) {
+    console.error(
+      'No se pudieron crear las notificaciones de nueva solicitud:',
+      error,
+    );
+  }
+
 }
   /**
  * Consultar el estado de la solicitud del usuario.
