@@ -54,6 +54,8 @@ export class PublicDishService {
             }
           : {}),
 
+        ...(filters.categoriaId ? { categoria_id: filters.categoriaId } : {}),
+
         restaurantes: {
           deleted_at: null,
           estado_cuenta: estado_cuenta_rest.activo,

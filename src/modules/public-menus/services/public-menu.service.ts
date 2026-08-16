@@ -37,6 +37,22 @@ export class PublicMenuService {
         estado: estado_publicacion.publicado,
         fecha_inicio: { lte: today },
         fecha_fin: { gte: today },
+
+        // Para menús públicos, "search" busca por el nombre del menú del
+        // día (ANTES este filtro no se aplicaba: se le pasaba search:undefined
+        // a Explore -a propósito, para no filtrar restaurantes por nombre acá-
+        // pero nunca se reaplicaba sobre menus_del_dia, así que el buscador
+        // de la pantalla "Menús" no filtraba nada).
+        ...(filters.search
+          ? {
+              nombre: {
+                contains: filters.search,
+                mode: 'insensitive',
+              },
+            }
+          : {}),
+
+        ...(filters.categoriaId ? { categoria_id: filters.categoriaId } : {}),
         restaurantes: {
           deleted_at: null,
           estado_cuenta: estado_cuenta_rest.activo,

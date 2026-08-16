@@ -33,6 +33,7 @@ export class PublicPromotionService {
         activa: true,
         fecha_inicio: { lte: today },
         fecha_fin: { gte: today },
+        ...(filters.categoriaId ? { categoria_id: filters.categoriaId } : {}),
         restaurantes: {
           deleted_at: null,
           estado_cuenta: estado_cuenta_rest.activo,
