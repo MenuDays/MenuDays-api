@@ -2,6 +2,11 @@ import { PrismaClient } from '@prisma/client';
 
 const categories = [
   {
+    nombre: 'Almuerzos',
+    iconoUrl:
+      'https://res.cloudinary.com/devfiioky/image/upload/placeholder/Almuerzos.png',
+  },
+  {
     nombre: 'Bares',
     iconoUrl:
       'https://res.cloudinary.com/devfiioky/image/upload/v1785631127/Bares_jnxopg.png',
@@ -20,6 +25,11 @@ const categories = [
     nombre: 'Cafetería',
     iconoUrl:
       'https://res.cloudinary.com/devfiioky/image/upload/v1785631359/Cafeter%C3%ADa_cxbh0l.png',
+  },
+  {
+    nombre: 'Cenas',
+    iconoUrl:
+      'https://res.cloudinary.com/devfiioky/image/upload/placeholder/Cenas.png',
   },
   {
     nombre: 'Cevicherías',
@@ -75,6 +85,11 @@ const categories = [
     nombre: 'Mariscos',
     iconoUrl:
       'https://res.cloudinary.com/devfiioky/image/upload/v1785631454/Mariscos_rll3az.png',
+  },
+  {
+    nombre: 'Meriendas',
+    iconoUrl:
+      'https://res.cloudinary.com/devfiioky/image/upload/placeholder/Meriendas.png',
   },
   {
     nombre: 'Mexicana',
