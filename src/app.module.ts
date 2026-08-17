@@ -11,6 +11,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { RestaurantModule } from './modules/restaurants/restaurants.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { MenusModule } from './modules/menus/menus.module';
+import { MenuCollectionsModule } from './modules/menu-collections/menu-collections.module';
 import { PromotionModule } from './modules/promotions/promotions.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { DishesModule } from './modules/dishes/dishes.module';
@@ -37,6 +38,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     RestaurantModule,
     GalleryModule,
     MenusModule,
+    MenuCollectionsModule,
     PromotionModule,
     CategoriesModule,
     DishesModule,

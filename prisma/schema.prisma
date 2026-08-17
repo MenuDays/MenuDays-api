@@ -89,26 +89,49 @@ model iconos {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model menus_del_dia {
-  id             BigInt             @id @default(autoincrement())
-  restaurante_id BigInt
-  nombre         String             @db.VarChar(150)
-  categoria_id   BigInt?
-  descripcion    String?
-  precio         Decimal            @db.Decimal(10, 2)
-  foto_url       String?
-  fecha_inicio   DateTime           @db.Date
-  fecha_fin      DateTime           @db.Date
-  estado         estado_publicacion @default(programado)
-  created_at     DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime           @default(now()) @db.Timestamptz(6)
-  deleted_at     DateTime?          @db.Timestamptz(6)
-  restaurantes   restaurantes       @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  categorias     categorias?         @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  pedidos        pedidos[]
+  id               BigInt             @id @default(autoincrement())
+  restaurante_id   BigInt
+  nombre           String             @db.VarChar(150)
+  categoria_id     BigInt?
+  descripcion      String?
+  precio           Decimal            @db.Decimal(10, 2)
+  foto_url         String?
+  fecha_inicio     DateTime           @db.Date
+  fecha_fin        DateTime           @db.Date
+  estado           estado_publicacion @default(programado)
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at       DateTime?          @db.Timestamptz(6)
+  coleccion_id     BigInt?
+  restaurantes     restaurantes       @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  categorias       categorias?        @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  menu_colecciones menu_colecciones?  @relation(fields: [coleccion_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  pedidos          pedidos[]
 
   @@index([restaurante_id], map: "ix_menus_restaurante")
   @@index([categoria_id], map: "ix_menus_categoria")
+  @@index([coleccion_id], map: "ix_menus_coleccion")
   @@index([fecha_inicio, fecha_fin], map: "ix_menus_vigencia")
+}
+
+// Colecciones de Menús: agrupan exclusivamente menús del día dentro de un
+// mismo restaurante (ej. "Entradas", "Sopas", "Menú Infantil", "Postres").
+// Concepto independiente de `categorias` (taxonomía global de cocina que
+// usan platos/menús/promociones) -- no se relaciona con esa tabla para
+// evitar mezclar ambos sistemas.
+model menu_colecciones {
+  id             BigInt          @id @default(autoincrement())
+  restaurante_id BigInt
+  nombre         String          @db.VarChar(100)
+  orden          Int             @default(0)
+  activo         Boolean         @default(true)
+  created_at     DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime        @default(now()) @db.Timestamptz(6)
+  restaurantes   restaurantes    @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  menus_del_dia  menus_del_dia[]
+
+  @@unique([restaurante_id, nombre])
+  @@index([restaurante_id], map: "ix_menu_colecciones_restaurante")
 }
 
 model motivos_reporte {
@@ -225,7 +248,7 @@ model promociones {
   updated_at     DateTime     @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?    @db.Timestamptz(6)
   restaurantes   restaurantes @relation(fields: [restaurante_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  categorias categorias? @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categorias     categorias?  @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pedidos        pedidos[]
 
   @@index([restaurante_id], map: "ix_promociones_restaurante")
@@ -348,6 +371,7 @@ model restaurantes {
   favoritos                  favoritos[]
   galeria_imagenes           galeria_imagenes[]
   menus_del_dia              menus_del_dia[]
+  menu_colecciones           menu_colecciones[]
   pedidos                    pedidos[]
   platos                     platos[]
   promociones                promociones[]

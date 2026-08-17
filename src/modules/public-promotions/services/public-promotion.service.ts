@@ -4,6 +4,10 @@ import { estado_cuenta_rest } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { ExploreService } from '../../explore/services/explore.service';
 import { FindPublicPromotionsDto } from '../dto/find-public-promotions.dto';
+import {
+  computeEstadoOperativo,
+  getEcuadorTodayDateOnly,
+} from '../../../core/common/utils/restaurant-status.util';
 
 @Injectable()
 export class PublicPromotionService {
@@ -24,7 +28,7 @@ export class PublicPromotionService {
       return [];
     }
 
-    const today = new Date();
+    const today = getEcuadorTodayDateOnly();
 
     const promotions = await this.prisma.promociones.findMany({
       where: {
@@ -46,6 +50,7 @@ export class PublicPromotionService {
             nombre_comercial: true,
             logo_url: true,
             estado_operativo: true,
+            restaurante_horarios: true,
             calificacion_promedio: true,
             cantidad_resenas: true,
           },
@@ -66,6 +71,7 @@ export class PublicPromotionService {
       this.serializePromotion(
         promotion,
         distancesByRestaurant.get(promotion.restaurante_id.toString()),
+        false,
       ),
     );
   }
@@ -75,7 +81,7 @@ export class PublicPromotionService {
    * vigente y su restaurante permanezca activo.
    */
   async findOne(promotionId: bigint) {
-    const today = new Date();
+    const today = getEcuadorTodayDateOnly();
 
     const promotion = await this.prisma.promociones.findFirst({
       where: {
@@ -130,25 +136,42 @@ export class PublicPromotionService {
       throw new NotFoundException('Promoción no encontrada.');
     }
 
-    return this.serializePromotion(promotion);
+    return this.serializePromotion(promotion, undefined, true);
   }
 
   /**
    * Serializa la respuesta pública de la promoción.
    *
    * Reemplaza la relación "restaurantes"
-   * por "restaurante" y agrega la distancia
-   * cuando corresponda.
+   * por "restaurante", recalcula el estado operativo real en base al
+   * horario del restaurante y agrega la distancia cuando corresponda.
    */
-  private serializePromotion<T extends { restaurantes: unknown }>(
-    promotion: T,
-    distance?: number,
-  ) {
+  private serializePromotion<
+    T extends {
+      restaurantes: {
+        estado_operativo: 'abierto' | 'cerrado' | 'cerrado_temporal' | 'vacaciones';
+        restaurante_horarios: {
+          dia_semana: number;
+          hora_apertura: Date | null;
+          hora_cierre: Date | null;
+          cerrado: boolean;
+        }[];
+      } & Record<string, unknown>;
+    },
+  >(promotion: T, distance?: number, includeHorarios = false) {
     const { restaurantes, ...promotionData } = promotion;
+    const { restaurante_horarios, ...restauranteData } = restaurantes;
 
     return {
       ...promotionData,
-      restaurante: restaurantes,
+      restaurante: {
+        ...restauranteData,
+        estado_operativo: computeEstadoOperativo(
+          restaurantes.estado_operativo,
+          restaurante_horarios,
+        ),
+        ...(includeHorarios ? { restaurante_horarios } : {}),
+      },
       ...(distance !== undefined ? { distancia: distance } : {}),
     };
   }

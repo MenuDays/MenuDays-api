@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { formatHour } from '../../../core/common/utils/format-hour.util';
+import {
+  computeEstadoOperativo,
+  getEcuadorTodayDateOnly,
+} from '../../../core/common/utils/restaurant-status.util';
 @Injectable()
 export class RestaurantPublicService {
   constructor(private readonly prisma: PrismaService) {}
@@ -143,7 +147,7 @@ export class RestaurantPublicService {
    * publicados del restaurante.
    */
   private async getMenus(restaurantId: bigint) {
-  const today = new Date();
+  const today = getEcuadorTodayDateOnly();
 
   const menus = await this.prisma.menus_del_dia.findMany({
     where: {
@@ -156,6 +160,9 @@ export class RestaurantPublicService {
       fecha_fin: {
         gte: today,
       },
+    },
+    include: {
+      menu_colecciones: true,
     },
     orderBy: [
       {
@@ -291,7 +298,10 @@ export class RestaurantPublicService {
         lng: restaurant.ubicacion_lng,
       },
 
-      estadoOperativo: restaurant.estado_operativo,
+      estadoOperativo: computeEstadoOperativo(
+        restaurant.estado_operativo,
+        restaurant.restaurante_horarios,
+      ),
 
       ofreceDelivery: restaurant.ofrece_delivery,
       nombreDelivery: restaurant.nombre_delivery,

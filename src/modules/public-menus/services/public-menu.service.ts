@@ -4,6 +4,10 @@ import { estado_cuenta_rest, estado_publicacion } from '@prisma/client';
 import { PrismaService } from '../../../core/database/prisma.service';
 import { ExploreService } from '../../explore/services/explore.service';
 import { FindPublicMenusDto } from '../dto/find-public-menus.dto';
+import {
+  computeEstadoOperativo,
+  getEcuadorTodayDateOnly,
+} from '../../../core/common/utils/restaurant-status.util';
 
 @Injectable()
 export class PublicMenuService {
@@ -28,7 +32,7 @@ export class PublicMenuService {
       return [];
     }
 
-    const today = new Date();
+    const today = getEcuadorTodayDateOnly();
 
     const menus = await this.prisma.menus_del_dia.findMany({
       where: {
@@ -65,11 +69,13 @@ export class PublicMenuService {
             nombre_comercial: true,
             logo_url: true,
             estado_operativo: true,
+            restaurante_horarios: true,
             calificacion_promedio: true,
             cantidad_resenas: true,
           },
         },
         categorias: true,
+        menu_colecciones: true,
       },
       orderBy: [{ fecha_fin: 'asc' }, { created_at: 'desc' }],
     });
@@ -85,6 +91,7 @@ export class PublicMenuService {
       this.serializeMenu(
         menu,
         distancesByRestaurant.get(menu.restaurante_id.toString()),
+        false,
       ),
     );
   }
@@ -94,7 +101,7 @@ export class PublicMenuService {
    * restaurante permanezca activo. No hay relación menú-platos en Prisma.
    */
   async findOne(menuId: bigint) {
-    const today = new Date();
+    const today = getEcuadorTodayDateOnly();
 
     const menu = await this.prisma.menus_del_dia.findFirst({
       where: {
@@ -142,6 +149,7 @@ export class PublicMenuService {
           },
         },
         categorias: true,
+        menu_colecciones: true,
       },
     });
 
@@ -149,18 +157,35 @@ export class PublicMenuService {
       throw new NotFoundException('Menú no encontrado.');
     }
 
-    return this.serializeMenu(menu);
+    return this.serializeMenu(menu, undefined, true);
   }
 
-  private serializeMenu<T extends { restaurantes: unknown }>(
-    menu: T,
-    distance?: number,
-  ) {
+  private serializeMenu<
+    T extends {
+      restaurantes: {
+        estado_operativo: 'abierto' | 'cerrado' | 'cerrado_temporal' | 'vacaciones';
+        restaurante_horarios: {
+          dia_semana: number;
+          hora_apertura: Date | null;
+          hora_cierre: Date | null;
+          cerrado: boolean;
+        }[];
+      } & Record<string, unknown>;
+    },
+  >(menu: T, distance?: number, includeHorarios = false) {
     const { restaurantes, ...menuData } = menu;
+    const { restaurante_horarios, ...restauranteData } = restaurantes;
 
     return {
       ...menuData,
-      restaurante: restaurantes,
+      restaurante: {
+        ...restauranteData,
+        estado_operativo: computeEstadoOperativo(
+          restaurantes.estado_operativo,
+          restaurante_horarios,
+        ),
+        ...(includeHorarios ? { restaurante_horarios } : {}),
+      },
       ...(distance !== undefined ? { distancia: distance } : {}),
     };
   }

@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../../core/database/prisma.service';
 import { RejectRestaurantRequestDto } from '../dto/reject-restaurant-request.dto';
 import { Prisma, estado_solicitud } from '@prisma/client';
+import { DEFAULT_MENU_COLLECTIONS } from '../../menu-collections/services/menu-collection.service';
 
 @Injectable()
 export class RestaurantRequestsAdminService {
@@ -261,6 +262,18 @@ for (const schedule of schedules) {
     },
   });
 }
+
+  // Colecciones de menús iniciales (Entradas/Sopas/Menú Infantil/Postres).
+  // Puramente organizativas, el restaurante puede renombrarlas/borrarlas o
+  // agregar más después -- no bloquean nada si fallan, por eso van después
+  // de los pasos que sí son necesarios para que el restaurante funcione.
+  await this.prisma.menu_colecciones.createMany({
+    data: DEFAULT_MENU_COLLECTIONS.map((nombre, index) => ({
+      restaurante_id: createdRestaurant.id,
+      nombre,
+      orden: index,
+    })),
+  });
 
   // Cambiar rol del usuario
   await this.prisma.usuarios.update({

@@ -44,4 +44,14 @@ export class CreateMenuDto {
   @IsInt()
   @IsPositive()
   categoriaId!: number;
+
+  // Colección de menús (Entradas/Sopas/etc.) -- opcional a propósito: es un
+  // concepto distinto e independiente de categoriaId (ver menu_colecciones
+  // en el schema), y no debe ser obligatorio para no romper el flujo
+  // existente de creación de menús.
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  coleccionId?: number;
 }

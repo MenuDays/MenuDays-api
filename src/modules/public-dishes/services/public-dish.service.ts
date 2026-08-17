@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../../core/database/prisma.service';
 import { ExploreService } from '../../explore/services/explore.service';
 import { FindPublicDishesDto } from '../dto/find-public-dishes.dto';
+import { computeEstadoOperativo } from '../../../core/common/utils/restaurant-status.util';
 
 @Injectable()
 export class PublicDishService {
@@ -74,6 +75,7 @@ export class PublicDishService {
             nombre_comercial: true,
             logo_url: true,
             estado_operativo: true,
+            restaurante_horarios: true,
             calificacion_promedio: true,
             cantidad_resenas: true,
           },
@@ -95,6 +97,7 @@ export class PublicDishService {
       this.serializeDish(
         dish,
         distancesByRestaurant.get(dish.restaurante_id.toString()),
+        false,
       ),
     );
   }
@@ -161,25 +164,42 @@ export class PublicDishService {
       throw new NotFoundException('Plato no encontrado.');
     }
 
-    return this.serializeDish(dish);
+    return this.serializeDish(dish, undefined, true);
   }
 
   /**
    * Serializa la respuesta pública del plato.
    *
    * Reemplaza la relación "restaurantes"
-   * por "restaurante" y agrega la distancia
-   * cuando corresponda.
+   * por "restaurante", recalcula el estado operativo real en base al
+   * horario del restaurante y agrega la distancia cuando corresponda.
    */
-  private serializeDish<T extends { restaurantes: unknown }>(
-    dish: T,
-    distance?: number,
-  ) {
+  private serializeDish<
+    T extends {
+      restaurantes: {
+        estado_operativo: 'abierto' | 'cerrado' | 'cerrado_temporal' | 'vacaciones';
+        restaurante_horarios: {
+          dia_semana: number;
+          hora_apertura: Date | null;
+          hora_cierre: Date | null;
+          cerrado: boolean;
+        }[];
+      } & Record<string, unknown>;
+    },
+  >(dish: T, distance?: number, includeHorarios = false) {
     const { restaurantes, ...dishData } = dish;
+    const { restaurante_horarios, ...restauranteData } = restaurantes;
 
     return {
       ...dishData,
-      restaurante: restaurantes,
+      restaurante: {
+        ...restauranteData,
+        estado_operativo: computeEstadoOperativo(
+          restaurantes.estado_operativo,
+          restaurante_horarios,
+        ),
+        ...(includeHorarios ? { restaurante_horarios } : {}),
+      },
       ...(distance !== undefined ? { distancia: distance } : {}),
     };
   }

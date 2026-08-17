@@ -6,6 +6,10 @@ import {
 
 import { PrismaService } from '../../../core/database/prisma.service';
 import { formatHour } from '../../../core/common/utils/format-hour.util';
+import {
+  computeEstadoOperativo,
+  getEcuadorTodayDateOnly,
+} from '../../../core/common/utils/restaurant-status.util';
 import { UpdateRestaurantDto } from '../dto/update-restaurant.dto';
 import { UpdateRestaurantCategoriesDto } from '../dto/update-restaurant-categories.dto';
 import { CloudinaryFolder, CloudinaryService } from '../../../core/integrations/cloudinary/cloudinary.service';
@@ -47,6 +51,11 @@ constructor(
 
     return {
   ...restaurant,
+
+  estado_operativo: computeEstadoOperativo(
+    restaurant.estado_operativo,
+    restaurant.restaurante_horarios,
+  ),
 
   restaurante_horarios: restaurant.restaurante_horarios.map((horario) => ({
     ...horario,
@@ -119,6 +128,9 @@ constructor(
     const restaurant = await this.prisma.restaurantes.findUnique({
       where: {
         usuario_id: BigInt(userId),
+      },
+      include: {
+        restaurante_horarios: true,
       },
     });
 
@@ -224,7 +236,7 @@ async getDashboard(userId: bigint) {
   // Buscar restaurante.
   const restaurant = await this.findRestaurantByUserId(userId);
 
-  const today = new Date();
+  const today = getEcuadorTodayDateOnly();
 
   const [
     platosRegistrados,
@@ -278,7 +290,10 @@ async getDashboard(userId: bigint) {
       nombreComercial: restaurant.nombre_comercial,
       logoUrl: restaurant.logo_url,
       portadaUrl: restaurant.portada_url,
-      estadoOperativo: restaurant.estado_operativo,
+      estadoOperativo: computeEstadoOperativo(
+        restaurant.estado_operativo,
+        restaurant.restaurante_horarios,
+      ),
     },
 
     resumen: {

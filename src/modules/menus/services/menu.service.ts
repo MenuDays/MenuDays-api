@@ -47,6 +47,16 @@ export class MenuService {
     );
   }
 
+  // Si se envía una colección, validar que exista y pertenezca a este
+  // mismo restaurante (una colección de Restaurante A nunca debe poder
+  // asignarse a un menú de Restaurante B).
+  if (createMenuDto.coleccionId !== undefined) {
+    await this.validateCollectionOwnership(
+      restaurant.id,
+      createMenuDto.coleccionId,
+    );
+  }
+
   // Subir imagen a Cloudinary
   let imageUrl: string;
 
@@ -72,6 +82,10 @@ export class MenuService {
 
         nombre: createMenuDto.nombre,
         categoria_id: BigInt(createMenuDto.categoriaId),
+        coleccion_id:
+          createMenuDto.coleccionId !== undefined
+            ? BigInt(createMenuDto.coleccionId)
+            : undefined,
         descripcion:
           createMenuDto.descripcion,
 
@@ -121,6 +135,9 @@ async findAll(userId: bigint) {
     restaurante_id: restaurant.id,
     deleted_at: null,
   },
+  include: {
+    menu_colecciones: true,
+  },
   orderBy: {
     created_at: 'desc',
   },
@@ -158,6 +175,9 @@ async findOne(
         id: BigInt(menuId),
         restaurante_id: restaurant.id,
         deleted_at: null,
+      },
+      include: {
+        menu_colecciones: true,
       },
     });
 
@@ -216,6 +236,15 @@ async update(
     );
   }
 
+  // Si se envía una colección, validar que exista y pertenezca a este
+  // mismo restaurante.
+  if (updateMenuDto.coleccionId !== undefined) {
+    await this.validateCollectionOwnership(
+      restaurant.id,
+      updateMenuDto.coleccionId,
+    );
+  }
+
   // Mantener imagen actual por defecto
   let imageUrl = menu.foto_url;
 
@@ -255,6 +284,9 @@ async update(
     where: {
       id: menu.id,
     },
+    include: {
+      menu_colecciones: true,
+    },
     data: {
       nombre:
         updateMenuDto.nombre ?? menu.nombre,
@@ -263,6 +295,10 @@ async update(
       updateMenuDto.categoriaId !== undefined
     ? BigInt(updateMenuDto.categoriaId)
     : menu.categoria_id,
+      coleccion_id:
+      updateMenuDto.coleccionId !== undefined
+    ? BigInt(updateMenuDto.coleccionId)
+    : menu.coleccion_id,
       descripcion:
         updateMenuDto.descripcion ??
         menu.descripcion,
@@ -367,6 +403,29 @@ private serializeMenu(menu: any) {
     ...menu,
     precio: menu.precio?.toNumber() ?? null,
   };
+}
+
+/**
+ * Valida que una colección exista y pertenezca al restaurante dado.
+ * Evita que un restaurante asigne un menú a una colección ajena
+ * adivinando/enviando un ID de otro restaurante.
+ */
+private async validateCollectionOwnership(
+  restaurantId: bigint,
+  collectionId: number,
+) {
+  const coleccion = await this.prisma.menu_colecciones.findFirst({
+    where: {
+      id: BigInt(collectionId),
+      restaurante_id: restaurantId,
+    },
+  });
+
+  if (!coleccion) {
+    throw new NotFoundException(
+      'La colección indicada no existe o no pertenece a este restaurante.',
+    );
+  }
 }
 /**
  * Publicar u ocultar

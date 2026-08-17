@@ -4,6 +4,7 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { Prisma, estado_cuenta_rest } from '@prisma/client';
 
 import { FindRestaurantsDto } from '../dto/find-restaurants.dto';
+import { computeEstadoOperativo } from '../../../core/common/utils/restaurant-status.util';
 
 @Injectable()
 export class ExploreService {
@@ -26,11 +27,24 @@ export class ExploreService {
     // Obtener restaurantes.
     const restaurants = await this.prisma.restaurantes.findMany({
       where,
+      include: {
+        restaurante_horarios: true,
+      },
     });
+
+    // El estado operativo guardado es estático (nunca se actualiza solo);
+    // se recalcula acá en base al horario real y la hora actual en Ecuador.
+    const restaurantsWithStatus = restaurants.map((restaurant) => ({
+      ...restaurant,
+      estado_operativo: computeEstadoOperativo(
+        restaurant.estado_operativo,
+        restaurant.restaurante_horarios,
+      ),
+    }));
 
     // Aplicar el mismo criterio de radio usado por los consumidores
     // públicos cuando se recibe una ubicación de referencia.
-    return this.filterByDistance(restaurants, filters);
+    return this.filterByDistance(restaurantsWithStatus, filters);
   }
   /**
    * Construye dinámicamente el objeto

@@ -72,6 +72,9 @@ export class MenuController {
           type: 'string',
           format: 'date',
         },
+        coleccionId: {
+          type: 'number',
+        },
       },
       required: [
         'image',
@@ -163,6 +166,9 @@ export class MenuController {
         fechaFin: {
           type: 'string',
           format: 'date',
+        },
+        coleccionId: {
+          type: 'number',
         },
       },
     },
