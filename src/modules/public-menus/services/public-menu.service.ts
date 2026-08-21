@@ -9,6 +9,16 @@ import {
   getEcuadorTodayDateOnly,
 } from '../../../core/common/utils/restaurant-status.util';
 
+// getEcuadorTodayDateOnly() ya resuelve el día calendario correcto en
+// Ecuador -- de ahí se puede derivar el día de la semana sin volver a
+// tocar zonas horarias. getUTCDay() da 0=Domingo..6=Sábado (estándar
+// JS); se convierte al mismo criterio que restaurante_horarios.dia_semana
+// y menus_del_dia.dias_semana (1=Lunes..7=Domingo).
+function getEcuadorDiaSemana(todayDateOnly: Date): number {
+  const jsDay = todayDateOnly.getUTCDay();
+  return jsDay === 0 ? 7 : jsDay;
+}
+
 @Injectable()
 export class PublicMenuService {
   constructor(
@@ -33,6 +43,7 @@ export class PublicMenuService {
     }
 
     const today = getEcuadorTodayDateOnly();
+    const todayDiaSemana = getEcuadorDiaSemana(today);
 
     const menus = await this.prisma.menus_del_dia.findMany({
       where: {
@@ -41,6 +52,12 @@ export class PublicMenuService {
         estado: estado_publicacion.publicado,
         fecha_inicio: { lte: today },
         fecha_fin: { gte: today },
+        // Un menú "semanal" además tiene que caer en el día de la
+        // semana de hoy -- si no es semanal, esta condición no aplica.
+        OR: [
+          { tipo_programacion: { not: 'semanal' } },
+          { dias_semana: { has: todayDiaSemana } },
+        ],
 
         // Para menús públicos, "search" busca por el nombre del menú del
         // día (ANTES este filtro no se aplicaba: se le pasaba search:undefined
@@ -102,6 +119,7 @@ export class PublicMenuService {
    */
   async findOne(menuId: bigint) {
     const today = getEcuadorTodayDateOnly();
+    const todayDiaSemana = getEcuadorDiaSemana(today);
 
     const menu = await this.prisma.menus_del_dia.findFirst({
       where: {
@@ -110,6 +128,10 @@ export class PublicMenuService {
         estado: estado_publicacion.publicado,
         fecha_inicio: { lte: today },
         fecha_fin: { gte: today },
+        OR: [
+          { tipo_programacion: { not: 'semanal' } },
+          { dias_semana: { has: todayDiaSemana } },
+        ],
         restaurantes: {
           deleted_at: null,
           estado_cuenta: estado_cuenta_rest.activo,

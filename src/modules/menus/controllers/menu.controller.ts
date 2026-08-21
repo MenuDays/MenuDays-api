@@ -54,6 +54,7 @@ export class MenuController {
         image: {
           type: 'string',
           format: 'binary',
+          description: 'Opcional -- si no se manda, el menú queda sin foto.',
         },
         nombre: {
           type: 'string',
@@ -75,9 +76,26 @@ export class MenuController {
         coleccionId: {
           type: 'number',
         },
+        componenteEntrada: { type: 'string' },
+        componenteSopa: { type: 'string' },
+        componentePlatoFuerte: { type: 'string' },
+        componenteJugo: { type: 'string' },
+        componentePostre: { type: 'string' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        tipoProgramacion: {
+          type: 'string',
+          enum: ['hoy', 'fecha', 'semanal'],
+        },
+        diasSemana: {
+          type: 'array',
+          items: { type: 'number' },
+          description: '1=Lunes ... 7=Domingo, solo si tipoProgramacion=semanal.',
+        },
       },
       required: [
-        'image',
         'nombre',
         'precio',
         'fechaInicio',
@@ -169,6 +187,23 @@ export class MenuController {
         },
         coleccionId: {
           type: 'number',
+        },
+        componenteEntrada: { type: 'string' },
+        componenteSopa: { type: 'string' },
+        componentePlatoFuerte: { type: 'string' },
+        componenteJugo: { type: 'string' },
+        componentePostre: { type: 'string' },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        tipoProgramacion: {
+          type: 'string',
+          enum: ['hoy', 'fecha', 'semanal'],
+        },
+        diasSemana: {
+          type: 'array',
+          items: { type: 'number' },
         },
       },
     },
