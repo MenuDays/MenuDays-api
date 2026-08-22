@@ -17,6 +17,18 @@ export class PublicMenuController {
     return this.publicMenuService.findAvailable(filters);
   }
 
+  // Antes de ':id' a propósito -- si no, Nest podría intentar matchear
+  // "tags" contra la ruta ':id' (ParseIntPipe la rechazaría con un 400
+  // en vez de nunca llegar acá).
+  @Get('tags')
+  @ApiOperation({
+    summary:
+      'Buscar palabras clave (tags) que restaurantes hayan usado en sus menús, por texto parcial',
+  })
+  findMatchingTags(@Query('search') search?: string) {
+    return this.publicMenuService.findMatchingTags(search ?? '');
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener el detalle público de un menú disponible' })
   @ApiParam({ name: 'id', example: 1 })

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 import { FindRestaurantsDto } from '../../explore/dto/find-restaurants.dto';
 
@@ -16,4 +16,14 @@ export class FindPublicMenusDto extends FindRestaurantsDto {
   @IsOptional()
   @Transform(({ value }) => (value !== undefined ? BigInt(value) : undefined))
   categoriaId?: bigint;
+
+  @ApiPropertyOptional({
+    description:
+      'Palabra clave exacta (tag) del menú -- ver campo `tags` en menus_del_dia. Devuelve solo los menús que tengan ese tag.',
+    example: 'carnes',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  tag?: string;
 }

@@ -74,6 +74,7 @@ export class PublicMenuService {
           : {}),
 
         ...(filters.categoriaId ? { categoria_id: filters.categoriaId } : {}),
+        ...(filters.tag ? { tags: { has: filters.tag } } : {}),
         restaurantes: {
           deleted_at: null,
           estado_cuenta: estado_cuenta_rest.activo,
@@ -180,6 +181,37 @@ export class PublicMenuService {
     }
 
     return this.serializeMenu(menu, undefined, true);
+  }
+
+  /**
+   * Autocompletado de tags para el buscador de "Explorar": tags que
+   * algún restaurante haya usado en un menú vigente, filtrados por
+   * substring (case-insensitive). No hay índice GIN sobre `tags` así
+   * que esto hace un unnest + scan -- aceptable dado el volumen actual
+   * de menus_del_dia; si crece, se puede sumar un índice GIN.
+   */
+  async findMatchingTags(search: string): Promise<string[]> {
+    const trimmed = search.trim();
+    if (trimmed.length === 0) {
+      return [];
+    }
+
+    const rows = await this.prisma.$queryRaw<{ tag: string }[]>`
+      SELECT DISTINCT tag
+      FROM menus_del_dia m
+      CROSS JOIN LATERAL unnest(m.tags) AS tag
+      INNER JOIN restaurantes r ON r.id = m.restaurante_id
+      WHERE m.deleted_at IS NULL
+        AND m.estado = 'publicado'::estado_publicacion
+        AND m.fecha_fin >= CURRENT_DATE
+        AND r.deleted_at IS NULL
+        AND r.estado_cuenta = 'activo'::estado_cuenta_rest
+        AND tag ILIKE ${`%${trimmed}%`}
+      ORDER BY tag ASC
+      LIMIT 20
+    `;
+
+    return rows.map((row) => row.tag);
   }
 
   private serializeMenu<
