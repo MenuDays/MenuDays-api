@@ -50,6 +50,28 @@ export class UsersService {
           },
         },
       },
+      // Una cuenta de restaurante no suele completar su ubicación/
+      // teléfono PERSONAL (eso vive en `restaurantes`, no en
+      // `usuarios`) -- se incluye acá para poder usarlo como fallback
+      // en buildProfileResponse cuando el usuario entra a "Ver como
+      // comensal" y esos campos personales están vacíos.
+      restaurantes: {
+        select: {
+          ubicacion_lat: true,
+          ubicacion_lng: true,
+          ciudad: {
+            select: {
+              id: true,
+              nombre: true,
+              provincia: { select: { id: true, nombre: true } },
+            },
+          },
+          restaurante_telefonos: {
+            select: { telefono: true },
+            take: 1,
+          },
+        },
+      },
     },
   });
 
@@ -265,34 +287,63 @@ async deletePhoto(userId: number) {
 
   //para retornar el perfil en formato objeto con ru rta
 private buildProfileResponse(user: any) {
+  // Una cuenta de restaurante casi nunca completa su ubicación/
+  // teléfono/ciudad PERSONAL (son campos de `usuarios`, distintos de
+  // los de `restaurantes` que sí carga al registrarse) -- así que sin
+  // esto, "Ver como comensal" mostraba el perfil vacío/roto para
+  // cualquier cuenta de restaurante. Si el dato personal falta y la
+  // cuenta tiene un restaurante vinculado, se usa el del restaurante
+  // como fallback -- `usingRestaurantInfo` le avisa al front que ese
+  // valor no es "suyo" como comensal sino heredado de su restaurante.
+  const restaurant = user.restaurantes;
+  const hasOwnLocation = user.ubicacion_lat != null && user.ubicacion_lng != null;
+  const hasOwnPhone = !!user.phoneNumber;
+  const hasOwnCity = !!user.ciudad;
+
+  const latitude = hasOwnLocation
+    ? user.ubicacion_lat.toNumber()
+    : (restaurant?.ubicacion_lat?.toNumber() ?? null);
+  const longitude = hasOwnLocation
+    ? user.ubicacion_lng.toNumber()
+    : (restaurant?.ubicacion_lng?.toNumber() ?? null);
+  const phoneNumber = hasOwnPhone
+    ? user.phoneNumber
+    : (restaurant?.restaurante_telefonos?.[0]?.telefono ?? null);
+  const ciudadSource = hasOwnCity ? user.ciudad : restaurant?.ciudad;
+
   return {
     id: user.id,
     firstName: user.nombre,
     lastName: user.apellido,
     email: user.email,
-    phoneNumber: user.phoneNumber,
+    phoneNumber,
     profilePhotoUrl: user.foto_perfil_url,
 
-    province: user.ciudad?.provincia
+    province: ciudadSource?.provincia
       ? {
-          id: user.ciudad.provincia.id,
-          name: user.ciudad.provincia.nombre,
+          id: ciudadSource.provincia.id,
+          name: ciudadSource.provincia.nombre,
         }
       : null,
 
-    city: user.ciudad
+    city: ciudadSource
       ? {
-          id: user.ciudad.id,
-          name: user.ciudad.nombre,
+          id: ciudadSource.id,
+          name: ciudadSource.nombre,
         }
       : null,
 
     status: user.estado,
     emailVerified: user.email_verificado,
     createdAt: user.created_at,
-    latitude: user.ubicacion_lat?.toNumber() ?? null,
-    longitude: user.ubicacion_lng?.toNumber() ?? null,
+    latitude,
+    longitude,
     radioBusquedaKm: user.radio_busqueda_km.toNumber(),
+    // true si location/telefono/ciudad de arriba vinieron del
+    // restaurante vinculado en vez del propio usuario -- el front lo
+    // usa para aclarar "esto es la info de tu restaurante" en vez de
+    // mostrarlo como si fuera un dato personal cualquiera.
+    usingRestaurantInfo: !!restaurant && (!hasOwnLocation || !hasOwnPhone || !hasOwnCity),
   };
 }
 
