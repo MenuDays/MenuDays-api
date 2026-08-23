@@ -245,6 +245,14 @@ model platos {
   estado         estado_disponibilidad @default(disponible)
   activo         Boolean               @default(true)
   orden          Int                   @default(0)
+  // El restaurante puede marcar un plato como "destacado" (aparece en
+  // el carrusel de Platos Destacados del comensal) y/o "en oferta" (con
+  // un precio rebajado opcional -- si no se manda precio_oferta, se
+  // muestra como oferta sin precio tachado, solo el badge). Ambos son
+  // independientes entre sí y de estado/activo.
+  destacado      Boolean               @default(false)
+  en_oferta      Boolean               @default(false)
+  precio_oferta  Decimal?              @db.Decimal(10, 2)
   created_at     DateTime              @default(now()) @db.Timestamptz(6)
   updated_at     DateTime              @default(now()) @db.Timestamptz(6)
   deleted_at     DateTime?             @db.Timestamptz(6)
@@ -255,6 +263,8 @@ model platos {
 
   @@index([categoria_id], map: "ix_platos_categoria")
   @@index([restaurante_id], map: "ix_platos_restaurante")
+  @@index([destacado], map: "ix_platos_destacado")
+  @@index([en_oferta], map: "ix_platos_en_oferta")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

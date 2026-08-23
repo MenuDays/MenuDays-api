@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 
 import { FindRestaurantsDto } from '../../explore/dto/find-restaurants.dto';
 
@@ -16,4 +16,22 @@ export class FindPublicDishesDto extends FindRestaurantsDto {
   @IsOptional()
   @Transform(({ value }) => (value !== undefined ? BigInt(value) : undefined))
   categoriaId?: bigint;
+
+  @ApiPropertyOptional({
+    description: 'Si es true, devuelve solo platos marcados como "destacado".',
+    example: 'true',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  destacado?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Si es true, devuelve solo platos marcados como "en oferta".',
+    example: 'true',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  enOferta?: boolean;
 }

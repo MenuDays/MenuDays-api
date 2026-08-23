@@ -103,6 +103,17 @@ async create(
         createDishDto.activo ??
         true,
 
+      destacado:
+        createDishDto.destacado ??
+        false,
+
+      en_oferta:
+        createDishDto.enOferta ??
+        false,
+
+      precio_oferta:
+        createDishDto.precioOferta,
+
       plato_imagenes: {
   create: {
     url: imageUrl,
@@ -305,6 +316,19 @@ async update(
               updateDishDto.activo ??
               dish.activo,
 
+            destacado:
+              updateDishDto.destacado ??
+              dish.destacado,
+
+            en_oferta:
+              updateDishDto.enOferta ??
+              dish.en_oferta,
+
+            precio_oferta:
+              updateDishDto.precioOferta !== undefined
+                ? updateDishDto.precioOferta
+                : dish.precio_oferta,
+
             updated_at: new Date(),
           },
         }),
@@ -352,6 +376,19 @@ async update(
         activo:
           updateDishDto.activo ??
           dish.activo,
+
+        destacado:
+          updateDishDto.destacado ??
+          dish.destacado,
+
+        en_oferta:
+          updateDishDto.enOferta ??
+          dish.en_oferta,
+
+        precio_oferta:
+          updateDishDto.precioOferta !== undefined
+            ? updateDishDto.precioOferta
+            : dish.precio_oferta,
 
         updated_at: new Date(),
       },

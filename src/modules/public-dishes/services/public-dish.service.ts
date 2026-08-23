@@ -56,6 +56,8 @@ export class PublicDishService {
           : {}),
 
         ...(filters.categoriaId ? { categoria_id: filters.categoriaId } : {}),
+        ...(filters.destacado ? { destacado: true } : {}),
+        ...(filters.enOferta ? { en_oferta: true } : {}),
 
         restaurantes: {
           deleted_at: null,

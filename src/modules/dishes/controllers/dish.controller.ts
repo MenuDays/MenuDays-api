@@ -75,6 +75,18 @@ export class DishController {
       activo: {
         type: 'boolean',
       },
+      destacado: {
+        type: 'boolean',
+        description: 'Aparece en el carrusel de "Platos destacados" del comensal.',
+      },
+      enOferta: {
+        type: 'boolean',
+        description: 'Aparece en el carrusel de "Ofertas" del comensal.',
+      },
+      precioOferta: {
+        type: 'number',
+        description: 'Precio con descuento (opcional, solo si enOferta es true).',
+      },
     },
     required: [
       'image',

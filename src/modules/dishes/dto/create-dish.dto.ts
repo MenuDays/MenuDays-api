@@ -16,6 +16,18 @@ import {
 import { estado_disponibilidad } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
+// Los booleanos llegan por multipart/form-data como string ("true"/
+// "false"), no como boolean real -- esto los normaliza antes de que
+// corra @IsBoolean().
+function parseFormBoolean(fallback: boolean) {
+  return ({ value }: { value: unknown }) => {
+    if (value === undefined || value === null || value === '') return fallback;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') return value.toLowerCase() === 'true';
+    return Boolean(value);
+  };
+}
+
 export class CreateDishDto {
   @ApiProperty({
     example: 'Milanesa con papas fritas',
@@ -68,21 +80,39 @@ export class CreateDishDto {
     default: true,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined || value === null || value === '') {
-      return true;
-    }
-
-    if (typeof value === 'boolean') {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
-    }
-
-    return Boolean(value);
-  })
+  @Transform(parseFormBoolean(true))
   @IsBoolean()
   activo: boolean = true;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Indica si el plato aparece en el carrusel de "Platos destacados" del comensal.',
+    default: false,
+  })
+  @IsOptional()
+  @Transform(parseFormBoolean(false))
+  @IsBoolean()
+  destacado?: boolean = false;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Indica si el plato aparece en el carrusel de "Ofertas" del comensal.',
+    default: false,
+  })
+  @IsOptional()
+  @Transform(parseFormBoolean(false))
+  @IsBoolean()
+  enOferta?: boolean = false;
+
+  @ApiPropertyOptional({
+    example: 12.5,
+    description:
+      'Precio con descuento -- solo tiene sentido si enOferta es true. Opcional: sin este valor, el plato se muestra como "en oferta" sin precio tachado.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  @IsNumber()
+  precioOferta?: number;
 }

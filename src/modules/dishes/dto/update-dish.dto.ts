@@ -14,6 +14,12 @@ import { IsEnum } from 'class-validator';
 
 import { Transform } from 'class-transformer';
 
+function parseFormBoolean({ value }: { value: unknown }) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return Boolean(value);
+}
+
 export class UpdateDishDto {
 
   @ApiPropertyOptional({
@@ -72,4 +78,33 @@ estado?: estado_disponibilidad;
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   activo?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Indica si el plato aparece en el carrusel de "Platos destacados" del comensal.',
+  })
+  @IsOptional()
+  @Transform(parseFormBoolean)
+  @IsBoolean()
+  destacado?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Indica si el plato aparece en el carrusel de "Ofertas" del comensal.',
+  })
+  @IsOptional()
+  @Transform(parseFormBoolean)
+  @IsBoolean()
+  enOferta?: boolean;
+
+  @ApiPropertyOptional({
+    example: 12.5,
+    description:
+      'Precio con descuento -- solo tiene sentido si enOferta es true. Mandar null/cadena vacía lo limpia.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value !== undefined && value !== '' && value !== 'null' ? Number(value) : null))
+  @IsNumber()
+  precioOferta?: number | null;
 }
