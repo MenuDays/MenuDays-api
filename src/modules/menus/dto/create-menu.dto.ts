@@ -16,6 +16,23 @@ import {
 import { estado_publicacion, tipo_programacion_menu } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 
+// Los campos array (componente_*, tags, diasSemana) llegan por
+// multipart/form-data, así que el array real viaja serializado en JSON
+// dentro de un string -- esto lo parsea antes de que corran los
+// validadores de cada campo.
+function parseJsonArray({ value }: { value: unknown }): unknown {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [value];
+    } catch {
+      return value ? [value] : [];
+    }
+  }
+  return value;
+}
+
 export class CreateMenuDto {
   @IsString()
   @IsNotEmpty()
@@ -61,50 +78,56 @@ export class CreateMenuDto {
   @IsPositive()
   coleccionId?: number;
 
-  // Menú compuesto: nombre libre de cada plato interno, uno por tipo
-  // fijo. Todos opcionales -- un restaurante puede completar solo
-  // algunos (ej. solo entrada y postre).
+  // Menú compuesto: lista libre de nombres por cada tipo fijo -- un
+  // mismo tipo puede tener más de un nombre (ej. dos entradas
+  // distintas ese día). Todos opcionales -- un restaurante puede
+  // completar solo algunos tipos (ej. solo entrada y postre). Llega
+  // como multipart/form-data, así que el array real viaja serializado
+  // en JSON -- se transforma acá antes de validar cada elemento (mismo
+  // patrón que `tags` más abajo).
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  componenteEntrada?: string;
+  @Transform(parseJsonArray)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(150, { each: true })
+  componenteEntrada?: string[];
 
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  componenteSopa?: string;
+  @Transform(parseJsonArray)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(150, { each: true })
+  componenteSopa?: string[];
 
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  componentePlatoFuerte?: string;
+  @Transform(parseJsonArray)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(150, { each: true })
+  componentePlatoFuerte?: string[];
 
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  componenteJugo?: string;
+  @Transform(parseJsonArray)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(150, { each: true })
+  componenteJugo?: string[];
 
   @IsOptional()
-  @IsString()
-  @MaxLength(150)
-  componentePostre?: string;
+  @Transform(parseJsonArray)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(150, { each: true })
+  componentePostre?: string[];
 
-  // Palabras clave (chips). Llega como multipart/form-data, así que un
-  // array real se manda serializado en JSON -- se transforma acá antes
-  // de validar cada elemento.
+  // Palabras clave (chips).
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === 'string') {
-      try {
-        const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [value];
-      } catch {
-        return value ? [value] : [];
-      }
-    }
-    return value;
-  })
+  @Transform(parseJsonArray)
   @IsArray()
   @ArrayMaxSize(15)
   @IsString({ each: true })
@@ -117,18 +140,7 @@ export class CreateMenuDto {
 
   // 1=Lunes ... 7=Domingo, solo relevante si tipoProgramacion = 'semanal'.
   @IsOptional()
-  @Transform(({ value }) => {
-    if (Array.isArray(value)) return value;
-    if (typeof value === 'string') {
-      try {
-        const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [value];
-      } catch {
-        return value ? [value] : [];
-      }
-    }
-    return value;
-  })
+  @Transform(parseJsonArray)
   @IsArray()
   @ArrayMaxSize(7)
   @Type(() => Number)

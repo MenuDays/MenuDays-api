@@ -109,11 +109,14 @@ model menus_del_dia {
   // como forma de "tipar" un menú: un mismo menú puede tener presencia
   // en varios tipos a la vez (ej. incluye entrada Y postre), algo que
   // coleccion_id (1 menú = 1 colección) no podía representar.
-  componente_entrada     String? @db.VarChar(150)
-  componente_sopa        String? @db.VarChar(150)
-  componente_plato_fuerte String? @db.VarChar(150)
-  componente_jugo        String? @db.VarChar(150)
-  componente_postre      String? @db.VarChar(150)
+  // Cada tipo admite VARIOS nombres (ej. el restaurante ofrece dos
+  // entradas distintas ese día) -- por eso array, no un string suelto.
+  // El comensal ve cada uno como un checkbox dentro de su tipo.
+  componente_entrada     String[] @default([])
+  componente_sopa        String[] @default([])
+  componente_plato_fuerte String[] @default([])
+  componente_jugo        String[] @default([])
+  componente_postre      String[] @default([])
   // Palabras clave del menú (chips en el front). Pensado para
   // búsqueda/filtro futuro -- por eso array nativo, no un string.
   tags             String[]           @default([])

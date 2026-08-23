@@ -76,11 +76,11 @@ export class MenuController {
         coleccionId: {
           type: 'number',
         },
-        componenteEntrada: { type: 'string' },
-        componenteSopa: { type: 'string' },
-        componentePlatoFuerte: { type: 'string' },
-        componenteJugo: { type: 'string' },
-        componentePostre: { type: 'string' },
+        componenteEntrada: { type: 'array', items: { type: 'string' } },
+        componenteSopa: { type: 'array', items: { type: 'string' } },
+        componentePlatoFuerte: { type: 'array', items: { type: 'string' } },
+        componenteJugo: { type: 'array', items: { type: 'string' } },
+        componentePostre: { type: 'array', items: { type: 'string' } },
         tags: {
           type: 'array',
           items: { type: 'string' },
@@ -188,11 +188,11 @@ export class MenuController {
         coleccionId: {
           type: 'number',
         },
-        componenteEntrada: { type: 'string' },
-        componenteSopa: { type: 'string' },
-        componentePlatoFuerte: { type: 'string' },
-        componenteJugo: { type: 'string' },
-        componentePostre: { type: 'string' },
+        componenteEntrada: { type: 'array', items: { type: 'string' } },
+        componenteSopa: { type: 'array', items: { type: 'string' } },
+        componentePlatoFuerte: { type: 'array', items: { type: 'string' } },
+        componenteJugo: { type: 'array', items: { type: 'string' } },
+        componentePostre: { type: 'array', items: { type: 'string' } },
         tags: {
           type: 'array',
           items: { type: 'string' },
