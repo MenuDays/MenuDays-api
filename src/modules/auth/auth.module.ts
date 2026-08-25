@@ -27,7 +27,11 @@ import { PrismaModule } from '../../core/database/prisma.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: '7d',
+          // Antes estaba hardcodeado en 7d (ignorando JWT_EXPIRES_IN del
+          // .env) -- una sesión de comensal/restaurante debe durar mucho
+          // más que eso (como Uber Eats/Rappi: prácticamente no vence
+          // salvo que el usuario cierre sesión), no cortarse a la semana.
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '365d',
         },
       }),
     }),
