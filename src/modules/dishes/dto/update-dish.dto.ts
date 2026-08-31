@@ -13,6 +13,7 @@ import { estado_disponibilidad } from '@prisma/client';
 import { IsEnum } from 'class-validator';
 
 import { Transform } from 'class-transformer';
+import { parsePriceValue } from '../../../core/common/utils/parse-price.util';
 
 function parseFormBoolean({ value }: { value: unknown }) {
   if (typeof value === 'boolean') return value;
@@ -46,7 +47,7 @@ export class UpdateDishDto {
     description: 'Precio del plato.',
   })
   @IsOptional()
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => parsePriceValue(value))
   @IsNumber()
   precio?: number;
 
@@ -104,7 +105,7 @@ estado?: estado_disponibilidad;
       'Precio con descuento -- solo tiene sentido si enOferta es true. Mandar null/cadena vacía lo limpia.',
   })
   @IsOptional()
-  @Transform(({ value }) => (value !== undefined && value !== '' && value !== 'null' ? Number(value) : null))
+  @Transform(({ value }) => (value !== undefined && value !== '' && value !== 'null' ? parsePriceValue(value) : null))
   @IsNumber()
   precioOferta?: number | null;
 }

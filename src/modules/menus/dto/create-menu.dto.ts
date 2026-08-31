@@ -15,6 +15,7 @@ import {
 } from 'class-validator';
 import { estado_publicacion, tipo_programacion_menu } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
+import { parsePriceValue } from '../../../core/common/utils/parse-price.util';
 
 // Los campos array (componente_*, tags, diasSemana) llegan por
 // multipart/form-data, así que el array real viaja serializado en JSON
@@ -44,7 +45,9 @@ export class CreateMenuDto {
   @MaxLength(500)
   descripcion?: string;
 
-  @Type(() => Number)
+  // Acepta coma o punto decimal ("12,50" / "12.50") -- se normaliza a
+  // number antes de validar.
+  @Transform(({ value }) => parsePriceValue(value))
   @IsNumber({
     maxDecimalPlaces: 2,
   })

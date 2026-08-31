@@ -29,6 +29,7 @@ import { MenuService } from '../services/menu.service';
 
 import { CreateMenuDto } from '../dto/create-menu.dto';
 import { UpdateMenuDto } from '../dto/update-menu.dto';
+import { SetTodayMenusDto } from '../dto/set-today-menus.dto';
 
 @ApiTags('Menus')
 @ApiBearerAuth()
@@ -131,6 +132,41 @@ export class MenuController {
     @CurrentUser('id') userId: bigint,
   ) {
     return this.menuService.findAll(userId);
+  }
+
+  /**
+   * "Los menús de hoy son estos" -- el restaurante elige con checkbox
+   * cuáles de sus menús ya creados mostrar hoy, sin re-escribirlos.
+   * Declarado ANTES de las rutas con :id para que "aplicar-hoy" no matchee
+   * el parámetro dinámico.
+   */
+  @Patch('aplicar-hoy')
+  @ApiOperation({
+    summary: 'Definir los menús publicados para hoy (selección con checkbox)',
+  })
+  async setTodayMenus(
+    @CurrentUser('id') userId: bigint,
+
+    @Body()
+    dto: SetTodayMenusDto,
+  ) {
+    return this.menuService.setTodayMenus(userId, dto.ids);
+  }
+
+  /**
+   * Duplicar un menú ya creado para reutilizarlo sin empezar de cero.
+   */
+  @Post(':id/duplicar')
+  @ApiOperation({
+    summary: 'Duplicar un menú del día',
+  })
+  async duplicateMenu(
+    @CurrentUser('id') userId: bigint,
+
+    @Param('id', ParseIntPipe)
+    menuId: number,
+  ) {
+    return this.menuService.duplicate(userId, menuId);
   }
 
   /**

@@ -520,4 +520,130 @@ async toggle(
     estado: updatedMenu.estado,
   };
 }
+
+/**
+ * Duplicar un menú existente -- para reutilizar uno viejo sin volver a
+ * cargarlo desde cero. La copia nace OCULTA y programada para "hoy"; el
+ * restaurante la ajusta/publica desde la lista.
+ */
+async duplicate(userId: bigint, menuId: number) {
+  const restaurant = await this.prisma.restaurantes.findUnique({
+    where: { usuario_id: userId },
+  });
+
+  if (!restaurant) {
+    throw new NotFoundException('No se encontró el restaurante.');
+  }
+
+  const original = await this.prisma.menus_del_dia.findFirst({
+    where: {
+      id: BigInt(menuId),
+      restaurante_id: restaurant.id,
+      deleted_at: null,
+    },
+  });
+
+  if (!original) {
+    throw new NotFoundException('No se encontró el menú.');
+  }
+
+  const today = new Date();
+
+  const copy = await this.prisma.menus_del_dia.create({
+    data: {
+      restaurante_id: restaurant.id,
+      nombre: `${original.nombre} (copia)`.slice(0, 150),
+      categoria_id: original.categoria_id,
+      coleccion_id: original.coleccion_id,
+      descripcion: original.descripcion,
+      precio: original.precio,
+      foto_url: original.foto_url,
+      estado: 'oculto',
+      fecha_inicio: today,
+      fecha_fin: today,
+      componente_entrada: original.componente_entrada,
+      componente_sopa: original.componente_sopa,
+      componente_plato_fuerte: original.componente_plato_fuerte,
+      componente_jugo: original.componente_jugo,
+      componente_postre: original.componente_postre,
+      tags: original.tags,
+      tipo_programacion: 'hoy',
+      dias_semana: [],
+    },
+    include: { menu_colecciones: true },
+  });
+
+  return this.serializeMenu(copy);
+}
+
+/**
+ * "Los menús de hoy son estos": recibe la lista de ids elegidos con
+ * checkbox en la app y:
+ *   - los elegidos -> `publicado`, vigentes hoy (tipo_programacion 'hoy').
+ *   - los que estaban como menú de hoy y ya NO están elegidos -> `oculto`.
+ * Solo toca menús con tipo_programacion 'hoy' al ocultar, así no pisa
+ * menús programados a futuro ni semanales.
+ */
+async setTodayMenus(userId: bigint, ids: number[]) {
+  const restaurant = await this.prisma.restaurantes.findUnique({
+    where: { usuario_id: userId },
+  });
+
+  if (!restaurant) {
+    throw new NotFoundException('No se encontró el restaurante.');
+  }
+
+  const bigIds = Array.from(new Set(ids)).map((id) => BigInt(id));
+
+  if (bigIds.length > 0) {
+    const owned = await this.prisma.menus_del_dia.findMany({
+      where: {
+        id: { in: bigIds },
+        restaurante_id: restaurant.id,
+        deleted_at: null,
+      },
+      select: { id: true },
+    });
+
+    if (owned.length !== bigIds.length) {
+      throw new BadRequestException(
+        'Alguno de los menús no existe o no pertenece a este restaurante.',
+      );
+    }
+  }
+
+  const today = new Date();
+
+  await this.prisma.$transaction([
+    this.prisma.menus_del_dia.updateMany({
+      where: {
+        id: { in: bigIds },
+        restaurante_id: restaurant.id,
+        deleted_at: null,
+      },
+      data: {
+        estado: 'publicado',
+        tipo_programacion: 'hoy',
+        fecha_inicio: today,
+        fecha_fin: today,
+        updated_at: today,
+      },
+    }),
+    this.prisma.menus_del_dia.updateMany({
+      where: {
+        restaurante_id: restaurant.id,
+        deleted_at: null,
+        tipo_programacion: 'hoy',
+        estado: 'publicado',
+        ...(bigIds.length > 0 ? { id: { notIn: bigIds } } : {}),
+      },
+      data: {
+        estado: 'oculto',
+        updated_at: today,
+      },
+    }),
+  ]);
+
+  return this.findAll(userId);
+}
 }

@@ -141,7 +141,13 @@ export class OrderService {
   }
 
   async findOne(userId: bigint, orderId: number) {
-    const order = await this.findOrderById(BigInt(orderId));
+    // includeHistory=true: el detalle del comensal ahora también trae el
+    // historial de estados (pedido_historial_estados). Sirve para la línea
+    // de tiempo del recibo ("Pendiente ✓ -> Aceptado ✓ -> Preparando ...").
+    // No rompe nada: serializeOrder() ya agrega `historial` de forma
+    // condicional (igual que en getRestaurantOrder), los clientes que no lo
+    // usan simplemente ignoran esa clave.
+    const order = await this.findOrderById(BigInt(orderId), true);
     this.validateUserOwnership(order, userId);
     return this.serializeOrder(order);
   }

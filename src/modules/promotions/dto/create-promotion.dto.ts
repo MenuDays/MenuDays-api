@@ -14,6 +14,8 @@ import {
   Min,
   IsNumber,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { parsePriceValue } from '../../../core/common/utils/parse-price.util';
 
 export class CreatePromotionDto {
   @ApiProperty({
@@ -47,6 +49,7 @@ export class CreatePromotionDto {
   example: 8.99,
   description: 'Precio de la promoción.',
 })
+@Transform(({ value }) => parsePriceValue(value))
 @IsNumber()
 @Min(0)
 precio!: number;

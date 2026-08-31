@@ -15,6 +15,7 @@ import {
 
 import { estado_disponibilidad } from '@prisma/client';
 import { Transform } from 'class-transformer';
+import { parsePriceValue } from '../../../core/common/utils/parse-price.util';
 
 // Los booleanos llegan por multipart/form-data como string ("true"/
 // "false"), no como boolean real -- esto los normaliza antes de que
@@ -52,7 +53,7 @@ export class CreateDishDto {
     example: 15.5,
     description: 'Precio del plato.',
   })
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => parsePriceValue(value))
   @IsNumber()
   precio!: number;
 
@@ -112,7 +113,7 @@ export class CreateDishDto {
       'Precio con descuento -- solo tiene sentido si enOferta es true. Opcional: sin este valor, el plato se muestra como "en oferta" sin precio tachado.',
   })
   @IsOptional()
-  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  @Transform(({ value }) => (value !== undefined && value !== '' ? parsePriceValue(value) : undefined))
   @IsNumber()
   precioOferta?: number;
 }
