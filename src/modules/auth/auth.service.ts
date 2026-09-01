@@ -6,8 +6,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 
 import {
+  BadRequestException,
   ConflictException,
-  UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
 
@@ -34,7 +34,7 @@ export class AuthService {
 
   if (existingUser) {
     throw new ConflictException(
-      'Ya existe un usuario registrado con ese correo electrónico.',
+      'Ya existe una cuenta registrada con ese correo electrónico. Iniciá sesión o usá otro correo.',
     );
   } //error 409
 
@@ -87,9 +87,19 @@ return {
     },
   });
 
+  // Errores DISTINGUIDOS a propósito, para que el usuario sepa qué
+  // corregir (si es el correo o la contraseña). Es una decisión de
+  // producto: distinguirlos permite, en teoría, que alguien pruebe
+  // correos para ver cuáles están registrados. Se acepta ese riesgo a
+  // cambio de una mejor experiencia.
+  //
+  // Se usa 400 (BadRequestException) y NO 401: el front (services/api.ts)
+  // trata CUALQUIER 401 como "sesión vencida" -> limpia la sesión y
+  // redirige a login con un mensaje genérico, tragándose el mensaje
+  // específico. Con 400 el mensaje llega tal cual al usuario.
   if (!usuario) {
-    throw new UnauthorizedException(
-      'Correo electrónico o contraseña incorrectos.',
+    throw new BadRequestException(
+      'No encontramos ninguna cuenta con ese correo electrónico. Revisá que esté bien escrito o creá una cuenta nueva.',
     );
   }
 
@@ -99,20 +109,20 @@ return {
   );
 
   if (!passwordCorrecta) {
-    throw new UnauthorizedException(
-      'Correo electrónico o contraseña incorrectos.',
+    throw new BadRequestException(
+      'La contraseña es incorrecta. Volvé a intentar o restablecé tu contraseña.',
     );
   }
 
   if (usuario.estado === 'eliminado') {
     throw new ForbiddenException(
-      'La cuenta fue eliminada.',
+      'Esta cuenta fue eliminada. Si querés volver a usar MenuDays, registrate de nuevo.',
     );
   }
 
   if (usuario.estado === 'suspendido') {
     throw new ForbiddenException(
-      'La cuenta se encuentra suspendida.',
+      'Tu cuenta está suspendida temporalmente. Escribinos a soporte para más información.',
     );
   }
 
