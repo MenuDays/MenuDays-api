@@ -93,34 +93,45 @@ async createRequest(
     );
   }
 
-  // 6. Subir logo a Cloudinary
-  const logoUpload =
-    await this.cloudinaryService.uploadImage(
-      logo!,
-      CloudinaryFolder.REQUESTS,
+  // Las 3 imágenes son obligatorias. Si alguna no llegó (o llegó vacía
+  // porque su URI local ya no era válida) se corta acá con un mensaje
+  // claro, ANTES de subir nada -- así el usuario sabe qué foto volver a
+  // cargar y no queda una solicitud a medias.
+  if (!logo?.buffer?.length) {
+    throw new BadRequestException(
+      'Falta el logo del restaurante o la imagen no se pudo leer. Volvé a subirla.',
     );
+  }
+  if (!cedulaFront?.buffer?.length || !cedulaBack?.buffer?.length) {
+    throw new BadRequestException(
+      'Falta alguna foto de la cédula o no se pudo leer. Volvé a subir el frente y el dorso.',
+    );
+  }
 
-  // Obtener URL del logo
-
-  const logoUrl = logoUpload.secure_url;
-
-// Subir cédula frontal
-const cedulaFrontUpload =
-  await this.cloudinaryService.uploadImage(
-    cedulaFront!,
-    CloudinaryFolder.REQUESTS,
-  );
-
-const cedulaFrontUrl = cedulaFrontUpload.secure_url;
-
-// Subir cédula dorsal
-const cedulaBackUpload =
-  await this.cloudinaryService.uploadImage(
-    cedulaBack!,
-    CloudinaryFolder.REQUESTS,
-  );
-
-const cedulaBackUrl = cedulaBackUpload.secure_url;
+  // Subida de las 3 imágenes a Cloudinary. Si falla alguna, se devuelve
+  // un error entendible en vez de un 500 crudo -- la solicitud todavía
+  // no se creó, así que el usuario puede reintentar sin duplicar nada
+  // (el chequeo de "solicitud pendiente" de arriba lo cubre).
+  let logoUrl: string;
+  let cedulaFrontUrl: string;
+  let cedulaBackUrl: string;
+  try {
+    const [logoUpload, cedulaFrontUpload, cedulaBackUpload] = await Promise.all([
+      this.cloudinaryService.uploadImage(logo, CloudinaryFolder.REQUESTS),
+      this.cloudinaryService.uploadImage(cedulaFront, CloudinaryFolder.REQUESTS),
+      this.cloudinaryService.uploadImage(cedulaBack, CloudinaryFolder.REQUESTS),
+    ]);
+    logoUrl = logoUpload.secure_url;
+    cedulaFrontUrl = cedulaFrontUpload.secure_url;
+    cedulaBackUrl = cedulaBackUpload.secure_url;
+  } catch (error) {
+    if (error instanceof BadRequestException) {
+      throw error;
+    }
+    throw new BadRequestException(
+      'No se pudieron subir las imágenes. Revisá tu conexión y volvé a intentarlo en unos segundos.',
+    );
+  }
   // Crear el objeto de redes sociales
   const socialNetworks = {
     facebook: dto.socialNetworks?.facebook ?? null,
