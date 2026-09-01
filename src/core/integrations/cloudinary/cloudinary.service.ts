@@ -1,6 +1,7 @@
 import {
   Injectable,
   Inject,
+  Logger,
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -20,6 +21,14 @@ export enum CloudinaryFolder {
 
 @Injectable()
 export class CloudinaryService {
+  private readonly logger = new Logger(CloudinaryService.name);
+
+  // Tope de espera para que Cloudinary procese la subida. Sin esto, si
+  // Cloudinary se cuelga la petición del cliente queda esperando hasta
+  // SU propio timeout (con el menú a medio guardar). Con esto, el back
+  // corta y devuelve un 5xx claro y rápido.
+  private readonly UPLOAD_TIMEOUT_MS = 60_000;
+
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   private readonly ALLOWED_FORMATS = [
@@ -112,6 +121,8 @@ export class CloudinaryService {
 
           use_filename: false,
 
+          timeout: this.UPLOAD_TIMEOUT_MS,
+
           transformation: [
             {
               fetch_format: 'auto',
@@ -125,6 +136,10 @@ export class CloudinaryService {
         },
         (error, result) => {
           if (error) {
+            this.logger.error(
+              `Cloudinary rechazó la subida (folder ${folder}).`,
+              error instanceof Error ? error.stack : JSON.stringify(error),
+            );
             return reject(
               new InternalServerErrorException(
                 'Error al subir la imagen a Cloudinary.',

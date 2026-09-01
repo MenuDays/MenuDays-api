@@ -1,8 +1,9 @@
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BigIntInterceptor } from './core/common/interceptors/bigint.interceptor';
+import { HttpExceptionFilter } from './core/common/filters/http-exception.filter';
 
 import { AppModule } from './app.module';
 
@@ -31,6 +32,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(
   new BigIntInterceptor(),
 );
+
+  // Traduce al español los errores por defecto de NestJS (pipes, guards,
+  // 404 de ruta) que antes se mostraban en inglés al usuario.
+  app.useGlobalFilters(new HttpExceptionFilter());
   // Validaciones globales
   app.useGlobalPipes(
   new ValidationPipe({
@@ -40,6 +45,17 @@ async function bootstrap() {
     transformOptions: {
       enableImplicitConversion: true,
     },
+    // El front valida los formularios antes de enviar, así que un error
+    // de validación acá es un caso de borde (datos manipulados, versión
+    // vieja de la app). class-validator devuelve mensajes en inglés por
+    // defecto ("nombre must be a string", "property X should not
+    // exist"...), que se le mostraban crudos al usuario. Se reemplazan
+    // por un único mensaje claro en español -- los detalles técnicos
+    // quedan igual en los logs del validador para el desarrollador.
+    exceptionFactory: () =>
+      new BadRequestException(
+        'Revisa los datos ingresados: hay un campo incompleto o con un formato no válido.',
+      ),
   }),
 );
 

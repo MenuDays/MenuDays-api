@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
@@ -16,6 +17,16 @@ import { UpdateMenuDto } from '../dto/update-menu.dto';
 
 @Injectable()
 export class MenuService {
+  private readonly logger = new Logger(MenuService.name);
+
+  // Ventana durante la cual un POST /menus con el MISMO contenido
+  // (restaurante + nombre + precio + fechas) se considera un reintento
+  // del cliente y NO crea una copia. Cubre el caso de que la app haya
+  // reintentado la creación porque la primera respuesta tardó o se
+  // perdió (Railway reanudándose, red móvil lenta) -- ver
+  // fetchWithRetry en services/api.ts del front.
+  private static readonly DUPLICATE_WINDOW_MS = 60_000;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
@@ -50,6 +61,43 @@ export class MenuService {
     );
   }
 
+  // Anti-duplicado: si la app reintentó este POST porque la primera
+  // respuesta tardó/se perdió, el menú ya pudo haberse creado. Si hay
+  // uno idéntico creado hace muy poco, se devuelve ese en lugar de
+  // crear una copia (y así tampoco se re-sube la imagen a Cloudinary).
+  const fechaInicio = new Date(createMenuDto.fechaInicio);
+  const fechaFin = new Date(createMenuDto.fechaFin);
+
+  const recentDuplicate =
+    await this.prisma.menus_del_dia.findFirst({
+      where: {
+        restaurante_id: restaurant.id,
+        nombre: createMenuDto.nombre,
+        precio: createMenuDto.precio,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        deleted_at: null,
+        created_at: {
+          gte: new Date(
+            Date.now() - MenuService.DUPLICATE_WINDOW_MS,
+          ),
+        },
+      },
+      include: {
+        menu_colecciones: true,
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+  if (recentDuplicate) {
+    this.logger.warn(
+      `POST /menus duplicado ignorado (restaurante ${restaurant.id}, menú ${recentDuplicate.id}).`,
+    );
+    return this.serializeMenu(recentDuplicate);
+  }
+
   // La foto es opcional: si no llega, el menú se crea sin foto_url
   // (el front ya sabe mostrar un placeholder cuando es null).
   let imageUrl: string | undefined;
@@ -63,7 +111,11 @@ export class MenuService {
         );
 
       imageUrl = uploadedImage.secure_url;
-    } catch {
+    } catch (error) {
+      this.logger.error(
+        `Cloudinary falló al subir la imagen del menú (restaurante ${restaurant.id}).`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw new InternalServerErrorException(
         'Error al subir la imagen a Cloudinary.',
       );
@@ -93,13 +145,9 @@ export class MenuService {
   createMenuDto.estado ??
   'programado',
 
-        fecha_inicio: new Date(
-          createMenuDto.fechaInicio,
-        ),
+        fecha_inicio: fechaInicio,
 
-        fecha_fin: new Date(
-          createMenuDto.fechaFin,
-        ),
+        fecha_fin: fechaFin,
 
         componente_entrada: createMenuDto.componenteEntrada,
         componente_sopa: createMenuDto.componenteSopa,
