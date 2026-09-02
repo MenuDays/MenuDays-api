@@ -21,11 +21,12 @@ export class MenuService {
 
   // Ventana durante la cual un POST /menus con el MISMO contenido
   // (restaurante + nombre + precio + fechas) se considera un reintento
-  // del cliente y NO crea una copia. Cubre el caso de que la app haya
-  // reintentado la creación porque la primera respuesta tardó o se
-  // perdió (Railway reanudándose, red móvil lenta) -- ver
-  // fetchWithRetry en services/api.ts del front.
-  private static readonly DUPLICATE_WINDOW_MS = 60_000;
+  // del cliente y NO crea una copia -- devuelve el menú ya creado.
+  // Cubre el caso (frecuente en datos móviles) de que el request SÍ
+  // llegó y el menú se creó, pero la respuesta se perdió en el camino y
+  // la app reintenta. 5 min: bien holgado para varios reintentos +
+  // la reconciliación del front (MenuService.create en el móvil).
+  private static readonly DUPLICATE_WINDOW_MS = 5 * 60_000;
 
   constructor(
     private readonly prisma: PrismaService,
