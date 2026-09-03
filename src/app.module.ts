@@ -25,6 +25,7 @@ import { PublicMenusModule } from './modules/public-menus/public-menus.module';
 import { PublicDishesModule } from './modules/public-dishes/public-dishes.module';
 import { PublicPromotionsModule } from './modules/public-promotions/public-promotions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PublicSearchModule } from './modules/public-search/public-search.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     PublicDishesModule,
     PublicPromotionsModule,
     NotificationsModule,
+    PublicSearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

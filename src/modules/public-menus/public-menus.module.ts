@@ -9,5 +9,6 @@ import { PublicMenuService } from './services/public-menu.service';
   imports: [PrismaModule, ExploreModule],
   controllers: [PublicMenuController],
   providers: [PublicMenuService],
+  exports: [PublicMenuService],
 })
 export class PublicMenusModule {}

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../../../core/database/prisma.service';
-import { formatHour } from '../../../core/common/utils/format-hour.util';
+import { formatHour, parseHour } from '../../../core/common/utils/format-hour.util';
 import {
   computeEstadoOperativo,
   getEcuadorTodayDateOnly,
@@ -102,23 +102,64 @@ constructor(
     // Validar que la ciudad exista en la base de datos
     // antes de actualizar el restaurante.
 
-    // Actualizar la información del restaurante.
-    await this.prisma.restaurantes.update({
-      where: {
-        id: restaurant.id,
-      },
-      data: {
-        nombre_comercial: updateRestaurantDto.nombreComercial,
-        descripcion: updateRestaurantDto.descripcion,
-        direccion: updateRestaurantDto.direccion,
-        ciudad_id: updateRestaurantDto.ciudadId,
-        ubicacion_lat: updateRestaurantDto.ubicacionLat,
-        ubicacion_lng: updateRestaurantDto.ubicacionLng,
-        logo_url: updateRestaurantDto.logoUrl,
-        portada_url: updateRestaurantDto.portadaUrl,
-        ofrece_delivery: ofreceDelivery,
-        nombre_delivery: ofreceDelivery ? nombreDelivery?.trim() : null,
-      },
+    // Actualizar la información del restaurante y sus horarios de forma
+    // atómica: si el guardado de los horarios falla, tampoco queda
+    // aplicado el cambio de los datos del perfil.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.restaurantes.update({
+        where: {
+          id: restaurant.id,
+        },
+        data: {
+          nombre_comercial: updateRestaurantDto.nombreComercial,
+          descripcion: updateRestaurantDto.descripcion,
+          direccion: updateRestaurantDto.direccion,
+          ciudad_id: updateRestaurantDto.ciudadId,
+          ubicacion_lat: updateRestaurantDto.ubicacionLat,
+          ubicacion_lng: updateRestaurantDto.ubicacionLng,
+          logo_url: updateRestaurantDto.logoUrl,
+          portada_url: updateRestaurantDto.portadaUrl,
+          ofrece_delivery: ofreceDelivery,
+          nombre_delivery: ofreceDelivery ? nombreDelivery?.trim() : null,
+        },
+      });
+
+      // Horarios de atención. El front manda siempre los 7 días (1..7);
+      // se hace upsert por (restaurante_id, dia_semana) -- que es clave
+      // única en la tabla -- para conservar el id de las filas que ya
+      // existían y ser idempotente. Un día "cerrado" se guarda sin horas.
+      // Si `horarios` no viene en el DTO, no se toca nada.
+      if (updateRestaurantDto.horarios) {
+        for (const horario of updateRestaurantDto.horarios) {
+          const horaApertura = horario.cerrado
+            ? null
+            : parseHour(horario.horaApertura);
+          const horaCierre = horario.cerrado
+            ? null
+            : parseHour(horario.horaCierre);
+
+          await tx.restaurante_horarios.upsert({
+            where: {
+              restaurante_id_dia_semana: {
+                restaurante_id: restaurant.id,
+                dia_semana: horario.diaSemana,
+              },
+            },
+            create: {
+              restaurante_id: restaurant.id,
+              dia_semana: horario.diaSemana,
+              hora_apertura: horaApertura,
+              hora_cierre: horaCierre,
+              cerrado: horario.cerrado,
+            },
+            update: {
+              hora_apertura: horaApertura,
+              hora_cierre: horaCierre,
+              cerrado: horario.cerrado,
+            },
+          });
+        }
+      }
     });
 
     // Retornar el perfil actualizado.

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { RestaurantOrdersFilterDto } from '../dto/restaurant-orders-filter.dto';
 import { UpdateOrderStatusDto } from '../dto/update-order-status.dto';
+import { UpdateRestaurantOrderDto } from '../dto/update-restaurant-order.dto';
 import { UserOrdersFilterDto } from '../dto/user-orders-filter.dto';
 import { OrderService } from '../services/order.service';
 
@@ -57,6 +58,38 @@ export class OrderController {
     @Param('id', ParseIntPipe) orderId: number,
   ) {
     return this.orderService.getRestaurantOrder(userId, orderId);
+  }
+
+  @Patch('restaurant/:id/hide')
+  @ApiOperation({
+    summary: 'Ocultar un pedido concluido del listado del restaurante',
+  })
+  hideRestaurantOrder(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+  ) {
+    return this.orderService.hideForRestaurant(userId, orderId);
+  }
+
+  @Patch('restaurant/:id')
+  @ApiOperation({
+    summary: 'Editar un pedido (observaciones, método de entrega, total)',
+  })
+  updateRestaurantOrder(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+    @Body() dto: UpdateRestaurantOrderDto,
+  ) {
+    return this.orderService.updateRestaurantOrder(userId, orderId, dto);
+  }
+
+  @Patch(':id/hide')
+  @ApiOperation({ summary: 'Ocultar un pedido concluido de mi historial' })
+  hideOrder(
+    @CurrentUser('id') userId: bigint,
+    @Param('id', ParseIntPipe) orderId: number,
+  ) {
+    return this.orderService.hideForUser(userId, orderId);
   }
 
   @Get(':id/whatsapp-summary')

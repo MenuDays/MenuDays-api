@@ -10,5 +10,6 @@ import { PublicPromotionService } from './services/public-promotion.service';
   imports: [PrismaModule, ExploreModule],
   controllers: [PublicPromotionController],
   providers: [PublicPromotionService],
+  exports: [PublicPromotionService],
 })
 export class PublicPromotionsModule {}

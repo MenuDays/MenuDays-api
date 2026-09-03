@@ -8,6 +8,7 @@ import { PrismaService } from '../../../core/database/prisma.service';
 import { RejectRestaurantRequestDto } from '../dto/reject-restaurant-request.dto';
 import { Prisma, estado_solicitud } from '@prisma/client';
 import { DEFAULT_MENU_COLLECTIONS } from '../../menu-collections/services/menu-collection.service';
+import { parseHour } from '../../../core/common/utils/format-hour.util';
 
 @Injectable()
 export class RestaurantRequestsAdminService {
@@ -248,17 +249,19 @@ for (const [platform, url] of Object.entries(socialNetworks)) {
   const schedules = request.horarios as any[];
 
 for (const schedule of schedules) {
+  const cerrado = schedule.closed ?? false;
+
   await this.prisma.restaurante_horarios.create({
     data: {
       restaurante_id: createdRestaurant.id,
       dia_semana: schedule.day,
-      hora_apertura: schedule.openingHour
-        ? new Date(`1970-01-01T${schedule.openingHour}:00`)
-        : null,
-      hora_cierre: schedule.closingHour
-        ? new Date(`1970-01-01T${schedule.closingHour}:00`)
-        : null,
-      cerrado: schedule.closed ?? false,
+      // parseHour guarda la hora en UTC explícito, igual criterio que
+      // usa la edición de perfil y que la lectura (formatHour /
+      // restaurant-status.util) -- así el round-trip es exacto sin
+      // depender del huso horario del servidor.
+      hora_apertura: cerrado ? null : parseHour(schedule.openingHour),
+      hora_cierre: cerrado ? null : parseHour(schedule.closingHour),
+      cerrado,
     },
   });
 }

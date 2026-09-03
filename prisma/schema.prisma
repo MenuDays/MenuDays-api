@@ -209,6 +209,12 @@ model pedidos {
   metodo_entrega           metodo_entrega             @default(RETIRO_EN_LOCAL)
   estado                   estado_pedido              @default(pendiente)
   mensaje_whatsapp         String?
+  // Ocultar un pedido del historial SIN borrarlo (se conserva para
+  // reseñas, auditoría e integridad de relaciones). Cada lado tiene su
+  // propia marca: el comensal puede ocultarlo de su historial sin
+  // afectar la gestión del restaurante y viceversa. NULL = visible.
+  oculto_comensal_at       DateTime?                  @db.Timestamptz(6)
+  oculto_restaurante_at    DateTime?                  @db.Timestamptz(6)
   created_at               DateTime                   @default(now()) @db.Timestamptz(6)
   updated_at               DateTime                   @default(now()) @db.Timestamptz(6)
   pedido_historial_estados pedido_historial_estados[]
@@ -609,6 +615,7 @@ enum notificacion_tipo {
   solicitud_nueva
   solicitud_aprobada
   solicitud_rechazada
+  pedido_nuevo
   pedido_aceptado
   pedido_rechazado
   pedido_estado

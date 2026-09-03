@@ -10,5 +10,6 @@ import { PublicDishService } from './services/public-dish.service';
   imports: [PrismaModule, ExploreModule],
   controllers: [PublicDishController],
   providers: [PublicDishService],
+  exports: [PublicDishService],
 })
 export class PublicDishesModule {}
